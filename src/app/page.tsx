@@ -87,13 +87,13 @@ export default function Landing() {
         </Link>
       </nav>
 
-      <section className="text-center px-6 pt-14 pb-16 max-w-3xl mx-auto">
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
+      <section className="text-center px-6 pt-20 pb-16 max-w-3xl mx-auto">
+        <h1 className="font-[family-name:var(--font-editorial)] font-normal text-6xl sm:text-7xl tracking-tight leading-[1.05] text-[#16343A]">
           Payments that arrive
           <br />
           when work is <span className="text-[#E3A63B]">done</span>.
         </h1>
-        <p className="text-base text-[#5A6B70] mt-6 max-w-xl mx-auto">
+        <p className="text-lg text-[#16343A]/65 mt-7 max-w-xl mx-auto leading-relaxed">
           Tiba pays Southeast Asian gig workers in USDC — one atomic Solana
           transaction, instantly verifiable. Or let an AI agent pay them
           autonomously the moment it verifies the work.
@@ -176,7 +176,7 @@ export default function Landing() {
       </section>
 
       <section className="border-t border-[#123B63]/10 text-center px-6 py-16">
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#123B63]">
+        <h2 className="font-[family-name:var(--font-editorial)] font-normal text-4xl sm:text-5xl text-[#16343A]">
           Ready to pay your team?
         </h2>
         <Link
