@@ -102,17 +102,17 @@ export default function AgentDemo() {
       <header>
         <a
           href="/"
-          className="text-xs text-[#9B9A94] hover:text-[#F4F4F2] transition-colors"
+          className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
         >
-          ← back to SEA Payroll
+          ← back to Tiba
         </a>
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94] mt-4 mb-3">
+        <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mt-4 mb-3">
           AI + Agentic Commerce
         </p>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
-          Autonomous <span className="text-[#1EDBFF]">Pay-Per-Task</span>
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
+          Autonomous <span className="text-[#E3A63B]">Pay-Per-Task</span>
         </h1>
-        <p className="text-sm text-[#9B9A94] mt-3 max-w-md">
+        <p className="text-sm text-[#5A6B70] mt-3 max-w-md">
           No human approves each payment. An automated agent (a webhook, a
           verification job, a completion check) confirms a unit of work is
           done and the payment fires immediately, signed by its own Solana
@@ -120,22 +120,22 @@ export default function AgentDemo() {
         </p>
       </header>
 
-      <section className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 text-sm backdrop-blur-sm">
+      <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-[#9B9A94]">Agent wallet</span>
+          <span className="text-[#5A6B70]">Agent wallet</span>
           {agentAddress ? (
             <a
               href={`https://explorer.solana.com/address/${agentAddress}?cluster=devnet`}
               target="_blank"
               rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#9B9A94] hover:text-[#1EDBFF]"
+              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63]"
             >
               {agentAddress}
             </a>
           ) : (
             <button
               onClick={loadAgentAddress}
-              className="text-xs underline text-[#9B9A94] hover:text-[#1EDBFF]"
+              className="text-xs underline text-[#5A6B70] hover:text-[#123B63]"
             >
               load address
             </button>
@@ -145,13 +145,13 @@ export default function AgentDemo() {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94]">
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
             Pending agent-verified tasks
           </h2>
           <button
             onClick={runAgentCycle}
             disabled={running}
-            className="rounded-full bg-[#1EDBFF] text-black px-5 py-2 text-sm font-semibold disabled:opacity-25 disabled:bg-white/15 disabled:text-[#9B9A94] transition-colors"
+            className="rounded-full bg-[#E3A63B] text-[#16343A] px-5 py-2 text-sm font-semibold disabled:opacity-30 disabled:bg-[#123B63]/10 disabled:text-[#5A6B70] transition-colors"
           >
             {running ? "Agent running…" : "▶ Run agent cycle"}
           </button>
@@ -163,34 +163,34 @@ export default function AgentDemo() {
             return (
               <div
                 key={task.id}
-                className="rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-sm flex items-center justify-between gap-3"
+                className="rounded-lg border border-[#123B63]/12 bg-white px-4 py-3 text-sm flex items-center justify-between gap-3"
               >
                 <div>
                   <div className="font-medium">{task.worker}</div>
-                  <div className="text-[#9B9A94] text-xs mt-0.5">{task.reason}</div>
+                  <div className="text-[#5A6B70] text-xs mt-0.5">{task.reason}</div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-mono text-xs text-[#9B9A94]">
+                  <span className="font-mono text-xs text-[#5A6B70]">
                     {task.amount.toFixed(2)} USDC
                   </span>
                   {!result && (
-                    <span className="text-xs text-[#9B9A94]/60">queued</span>
+                    <span className="text-xs text-[#5A6B70]/60">queued</span>
                   )}
                   {result?.status === "running" && (
-                    <span className="text-xs text-amber-400">paying…</span>
+                    <span className="text-xs text-[#E3A63B]">paying…</span>
                   )}
                   {result?.status === "paid" && result.signature && (
                     <a
                       href={explorerTxUrl(result.signature)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs underline text-[#1EDBFF]"
+                      className="text-xs underline text-[#123B63]"
                     >
                       paid ↗
                     </a>
                   )}
                   {result?.status === "failed" && (
-                    <span className="text-xs text-red-400" title={result.error}>
+                    <span className="text-xs text-red-500" title={result.error}>
                       failed
                     </span>
                   )}
@@ -201,9 +201,9 @@ export default function AgentDemo() {
         </div>
       </section>
 
-      <footer className="mt-auto pt-8 text-xs text-[#9B9A94]/70">
-        Same on-chain engine as SEA Payroll — here triggered autonomously by
-        code instead of a human clicking &quot;pay.&quot; Devnet demo.
+      <footer className="mt-auto pt-8 text-xs text-[#5A6B70]/70">
+        Same on-chain engine as Tiba — here triggered autonomously by code
+        instead of a human clicking &quot;pay.&quot; Devnet demo.
       </footer>
     </div>
   );

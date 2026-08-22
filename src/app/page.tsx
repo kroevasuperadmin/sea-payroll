@@ -152,24 +152,25 @@ export default function Home() {
     <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94] mb-3">
+          <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
             Solana Lab · DevLeague 2026
           </p>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
-            SEA <span className="text-[#1EDBFF]">Payroll</span>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
+            Tiba
           </h1>
-          <p className="text-sm text-[#9B9A94] mt-3 max-w-sm">
-            Pay your Southeast Asian gig workers in USDC — one click, one
-            atomic Solana transaction, instantly verifiable.
+          <p className="text-sm text-[#5A6B70] mt-3 max-w-sm">
+            SEA Payroll, built on Tiba — pay your Southeast Asian gig workers
+            in USDC, one click, one atomic Solana transaction, instantly
+            verifiable.
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="[&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!bg-[#1EDBFF] [&_.wallet-adapter-button]:!text-black [&_.wallet-adapter-button]:!font-semibold [&_.wallet-adapter-button]:!text-sm">
+          <div className="[&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!bg-[#123B63] [&_.wallet-adapter-button]:!text-white [&_.wallet-adapter-button]:!font-semibold [&_.wallet-adapter-button]:!text-sm">
             <WalletMultiButton />
           </div>
           <a
             href="/agent"
-            className="text-xs text-[#9B9A94] hover:text-[#F4F4F2] transition-colors"
+            className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
           >
             🤖 AI Agent autonomous-pay demo →
           </a>
@@ -177,33 +178,33 @@ export default function Home() {
       </header>
 
       {connected && publicKey && (
-        <section className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 flex flex-col gap-3 text-sm backdrop-blur-sm">
+        <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 flex flex-col gap-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[#9B9A94]">Employer wallet</span>
+            <span className="text-[#5A6B70]">Employer wallet</span>
             <a
               href={explorerAddressUrl(publicKey.toBase58())}
               target="_blank"
               rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#9B9A94] hover:text-[#1EDBFF]"
+              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63]"
             >
               {publicKey.toBase58()}
             </a>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[#9B9A94]">Devnet USDC balance</span>
+            <span className="text-[#5A6B70]">Devnet USDC balance</span>
             <span className="flex items-center gap-2">
               {usdcBalance !== null ? `${usdcBalance.toFixed(2)} USDC` : "—"}
               <button
                 onClick={refreshBalance}
-                className="text-xs underline text-[#9B9A94] hover:text-[#1EDBFF]"
+                className="text-xs underline text-[#5A6B70] hover:text-[#123B63]"
               >
                 refresh
               </button>
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-[#9B9A94] pt-1 border-t border-white/10 mt-1">
+          <div className="flex items-center gap-4 text-xs text-[#5A6B70] pt-1 border-t border-[#123B63]/10 mt-1">
             <a
-              className="underline hover:text-[#1EDBFF]"
+              className="underline hover:text-[#123B63]"
               target="_blank"
               rel="noreferrer"
               href="https://faucet.solana.com"
@@ -211,7 +212,7 @@ export default function Home() {
               Get devnet SOL (gas)
             </a>
             <a
-              className="underline hover:text-[#1EDBFF]"
+              className="underline hover:text-[#123B63]"
               target="_blank"
               rel="noreferrer"
               href="https://faucet.circle.com"
@@ -224,13 +225,13 @@ export default function Home() {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94]">
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
             Workers to pay
           </h2>
           <button
             onClick={addWorker}
             disabled={workers.length >= MAX_BATCH_SIZE}
-            className="text-xs px-3.5 py-1.5 rounded-full border border-white/15 hover:border-[#1EDBFF] hover:text-[#1EDBFF] transition-colors disabled:opacity-30 disabled:hover:border-white/15 disabled:hover:text-inherit"
+            className="text-xs px-3.5 py-1.5 rounded-full border border-[#123B63]/20 hover:border-[#123B63] hover:text-[#123B63] transition-colors disabled:opacity-30 disabled:hover:border-[#123B63]/20 disabled:hover:text-inherit"
           >
             + Add worker
           </button>
@@ -246,16 +247,16 @@ export default function Home() {
                 value={w.name}
                 onChange={(e) => updateWorker(w.id, "name", e.target.value)}
                 placeholder="Worker name"
-                className="rounded-lg border border-white/12 bg-white/[0.03] px-3 py-2 text-sm outline-none focus:border-[#1EDBFF]/60 transition-colors"
+                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm outline-none focus:border-[#123B63]/60 transition-colors"
               />
               <input
                 value={w.address}
                 onChange={(e) => updateWorker(w.id, "address", e.target.value)}
                 placeholder="Solana devnet address"
-                className={`rounded-lg border bg-white/[0.03] px-3 py-2 text-sm font-mono outline-none transition-colors ${
+                className={`rounded-lg border bg-white px-3 py-2 text-sm font-mono outline-none transition-colors ${
                   w.address && !isValidAddress(w.address)
                     ? "border-red-400/60"
-                    : "border-white/12 focus:border-[#1EDBFF]/60"
+                    : "border-[#123B63]/15 focus:border-[#123B63]/60"
                 }`}
               />
               <input
@@ -263,12 +264,12 @@ export default function Home() {
                 onChange={(e) => updateWorker(w.id, "amount", e.target.value)}
                 placeholder="USDC"
                 inputMode="decimal"
-                className="rounded-lg border border-white/12 bg-white/[0.03] px-3 py-2 text-sm text-right outline-none focus:border-[#1EDBFF]/60 transition-colors"
+                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm text-right outline-none focus:border-[#123B63]/60 transition-colors"
               />
               <button
                 onClick={() => removeWorker(w.id)}
                 aria-label="Remove worker"
-                className="text-[#9B9A94] hover:text-red-400 text-sm transition-colors"
+                className="text-[#5A6B70] hover:text-red-500 text-sm transition-colors"
               >
                 ✕
               </button>
@@ -276,35 +277,37 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          <span className="text-sm text-[#9B9A94]">
+        <div className="flex items-center justify-between pt-3 border-t border-[#123B63]/10">
+          <span className="text-sm text-[#5A6B70]">
             {workers.length} worker{workers.length === 1 ? "" : "s"} · max{" "}
             {MAX_BATCH_SIZE} per batch
           </span>
-          <span className="font-semibold">{total.toFixed(2)} USDC total</span>
+          <span className="font-semibold text-[#123B63]">
+            {total.toFixed(2)} USDC total
+          </span>
         </div>
 
         <button
           onClick={payAll}
           disabled={!canPay}
-          className="mt-2 rounded-full bg-[#1EDBFF] text-black py-3 font-semibold text-sm disabled:opacity-25 disabled:bg-white/15 disabled:text-[#9B9A94] transition-colors"
+          className="mt-2 rounded-full bg-[#E3A63B] text-[#16343A] py-3 font-semibold text-sm disabled:opacity-30 disabled:bg-[#123B63]/10 disabled:text-[#5A6B70] transition-colors"
         >
           {busy ? "Processing…" : `Pay all ${workers.length} workers now`}
         </button>
 
-        {status && <p className="text-sm text-[#9B9A94]">{status}</p>}
+        {status && <p className="text-sm text-[#5A6B70]">{status}</p>}
       </section>
 
       {history.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94]">
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
             Payment history (this session)
           </h2>
           <div className="flex flex-col gap-1.5 text-sm">
             {history.map((h) => (
               <div
                 key={h.signature}
-                className="flex items-center justify-between rounded-lg border border-white/12 bg-white/[0.03] px-3.5 py-2.5"
+                className="flex items-center justify-between rounded-lg border border-[#123B63]/12 bg-white px-3.5 py-2.5"
               >
                 <span>
                   {h.workerCount} workers · {h.total.toFixed(2)} USDC ·{" "}
@@ -314,7 +317,7 @@ export default function Home() {
                   href={explorerTxUrl(h.signature)}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline text-xs font-mono text-[#1EDBFF]"
+                  className="underline text-xs font-mono text-[#123B63]"
                 >
                   view on Explorer ↗
                 </a>
@@ -324,9 +327,9 @@ export default function Home() {
         </section>
       )}
 
-      <footer className="mt-auto pt-8 text-xs text-[#9B9A94]/70">
-        Built for Superteam Malaysia · Solana Lab for DevLeague 2026 · Devnet
-        demo — real USDC-Dev mint, real Solana transactions.
+      <footer className="mt-auto pt-8 text-xs text-[#5A6B70]/70">
+        Tiba — built for Superteam Malaysia · Solana Lab for DevLeague 2026 ·
+        Devnet demo — real USDC-Dev mint, real Solana transactions.
       </footer>
     </div>
   );

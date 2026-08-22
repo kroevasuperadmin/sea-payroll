@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SEA Payroll — Pay gig workers in USDC, atomically, on Solana",
+  title: "Tiba — payments that arrive when work is done",
   description:
-    "Batch-pay Southeast Asian gig workers in USDC in a single atomic Solana transaction.",
+    "Batch-pay Southeast Asian gig workers in USDC in a single atomic Solana transaction, or let an AI agent pay them autonomously the moment a task is verified.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
