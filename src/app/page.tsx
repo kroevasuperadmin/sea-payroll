@@ -27,9 +27,24 @@ interface HistoryEntry {
 }
 
 const STARTER_WORKERS: WorkerRow[] = [
-  { id: "w1", name: "Maria — Manila (delivery rider)", address: "", amount: "25" },
-  { id: "w2", name: "Budi — Jakarta (freelance designer)", address: "", amount: "40" },
-  { id: "w3", name: "Linh — Ho Chi Minh City (virtual assistant)", address: "", amount: "18.5" },
+  {
+    id: "w1",
+    name: "Maria — Manila (delivery rider)",
+    address: "VYmSFKPM6oxW26hhpVsZ55ST2SyJQWCidQvPo4xLdRJ",
+    amount: "25",
+  },
+  {
+    id: "w2",
+    name: "Budi — Jakarta (freelance designer)",
+    address: "CGJ2DbQtFs4fas9r3BSKqKBZ3JeRXnboLZoBfde6v8Zz",
+    amount: "40",
+  },
+  {
+    id: "w3",
+    name: "Linh — Ho Chi Minh City (virtual assistant)",
+    address: "7DLdKZEzZgpLEmGVaWFwE3mtAbxc8Uf1L7YHABzkoPqG",
+    amount: "18.5",
+  },
 ];
 
 function isValidAddress(addr: string): boolean {
@@ -143,7 +158,12 @@ export default function Home() {
             atomic Solana transaction, instantly verifiable.
           </p>
         </div>
-        <WalletMultiButton />
+        <div className="flex flex-col items-end gap-2">
+          <WalletMultiButton />
+          <a href="/agent" className="text-xs underline text-neutral-500">
+            🤖 AI Agent autonomous-pay demo →
+          </a>
+        </div>
       </header>
 
       {connected && publicKey && (
