@@ -153,7 +153,7 @@ export default function Home() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
-            Solana Lab · DevLeague 2026
+            Solana Devnet
           </p>
           <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
             Tiba
@@ -336,8 +336,8 @@ export default function Home() {
       )}
 
       <footer className="mt-auto pt-8 text-xs text-[#5A6B70]/70">
-        Tiba — built for Superteam Malaysia · Solana Lab for DevLeague 2026 ·
-        Devnet demo — real USDC-Dev mint, real Solana transactions.
+        Tiba — Solana devnet demo. Real USDC-Dev mint, real Solana
+        transactions.
       </footer>
     </div>
   );

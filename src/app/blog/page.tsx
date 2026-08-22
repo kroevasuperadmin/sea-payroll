@@ -10,8 +10,8 @@ export default function Blog() {
         Nothing published yet.
       </h1>
       <p className="text-sm text-[#5A6B70] max-w-sm">
-        Tiba shipped in a single hackathon sprint for Superteam Malaysia&apos;s
-        Solana Lab — DevLeague 2026. Check back after the dust settles.
+        Tiba shipped fast, in a single focused build sprint. Check back
+        after the dust settles.
       </p>
       <Link href="/" className="text-sm text-[#123B63] underline mt-2">
         ← Try the app instead

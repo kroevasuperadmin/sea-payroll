@@ -61,7 +61,7 @@ export default function AgentDemo() {
           ← back to Tiba
         </a>
         <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mt-4 mb-3">
-          AI + Agentic Commerce
+          Autonomous Payments
         </p>
         <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
           Autonomous <span className="text-[#E3A63B]">Pay-Per-Task</span>

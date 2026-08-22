@@ -57,10 +57,6 @@ const STEPS = [
 export default function Landing() {
   return (
     <div className="flex-1 flex flex-col">
-      <div className="text-center text-xs py-2 bg-[#123B63] text-white">
-        Built for Superteam Malaysia's Solana Lab · DevLeague 2026
-      </div>
-
       <nav className="flex items-center justify-between px-6 sm:px-10 py-5 max-w-6xl mx-auto w-full">
         <span className="text-xl font-extrabold tracking-tight text-[#123B63]">
           Tiba
@@ -231,14 +227,6 @@ export default function Landing() {
               <Link href="/blog" className="hover:text-[#123B63]">
                 Blog
               </Link>
-              <a
-                href="https://superteam.fun/earn/listing/solana-lab-for-devleague-2026/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#123B63]"
-              >
-                Superteam Malaysia
-              </a>
             </div>
           </div>
           <div>
@@ -250,8 +238,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="border-t border-[#123B63]/10 px-6 py-6 max-w-6xl mx-auto text-xs text-[#5A6B70]/70">
-          Tiba is a devnet hackathon demo built for Superteam Malaysia&apos;s
-          Solana Lab — DevLeague 2026. No real funds are used or at risk;
+          Tiba is a Solana devnet demo. No real funds are used or at risk;
           devnet USDC has no monetary value.
         </div>
       </footer>

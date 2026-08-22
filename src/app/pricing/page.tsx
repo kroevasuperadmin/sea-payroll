@@ -10,7 +10,7 @@ export default function Pricing() {
         Free on devnet, always.
       </h1>
       <p className="text-sm text-[#5A6B70] max-w-sm">
-        Tiba is a hackathon demo — no fees, no plans, no billing. A mainnet
+        Tiba is a devnet demo — no fees, no plans, no billing. A mainnet
         pricing model (a small basis-point fee per settled batch) would come
         with a production launch.
       </p>
