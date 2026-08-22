@@ -21,7 +21,7 @@ export default function Docs() {
       >
         View the repository ↗
       </a>
-      <Link href="/app" className="text-sm text-[#5A6B70] underline">
+      <Link href="/" className="text-sm text-[#5A6B70] underline">
         ← Try the app instead
       </Link>
     </div>

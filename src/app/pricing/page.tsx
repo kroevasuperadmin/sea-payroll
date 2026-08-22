@@ -14,7 +14,7 @@ export default function Pricing() {
         pricing model (a small basis-point fee per settled batch) would come
         with a production launch.
       </p>
-      <Link href="/app" className="text-sm text-[#123B63] underline mt-2">
+      <Link href="/" className="text-sm text-[#123B63] underline mt-2">
         ← Try the app instead
       </Link>
     </div>

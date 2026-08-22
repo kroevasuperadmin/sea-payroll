@@ -26,7 +26,7 @@ export default function Status() {
           <span className="text-[#0F766E] text-xs">Operational</span>
         </div>
       </div>
-      <Link href="/app" className="text-sm text-[#123B63] underline mt-8 inline-block">
+      <Link href="/" className="text-sm text-[#123B63] underline mt-8 inline-block">
         ← Try the app
       </Link>
     </div>

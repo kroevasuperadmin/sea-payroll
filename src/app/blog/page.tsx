@@ -13,7 +13,7 @@ export default function Blog() {
         Tiba shipped in a single hackathon sprint for Superteam Malaysia&apos;s
         Solana Lab — DevLeague 2026. Check back after the dust settles.
       </p>
-      <Link href="/app" className="text-sm text-[#123B63] underline mt-2">
+      <Link href="/" className="text-sm text-[#123B63] underline mt-2">
         ← Try the app instead
       </Link>
     </div>
