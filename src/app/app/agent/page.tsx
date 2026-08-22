@@ -109,10 +109,10 @@ export default function AgentDemo() {
         <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mt-4 mb-3">
           AI + Agentic Commerce
         </p>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
+        <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
           Autonomous <span className="text-[#E3A63B]">Pay-Per-Task</span>
         </h1>
-        <p className="text-sm text-[#5A6B70] mt-3 max-w-md">
+        <p className="text-base text-[#16343A]/65 mt-3 max-w-md leading-relaxed">
           No human approves each payment. An automated agent (a webhook, a
           verification job, a completion check) confirms a unit of work is
           done and the payment fires immediately, signed by its own Solana
