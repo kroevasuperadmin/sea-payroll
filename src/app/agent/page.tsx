@@ -151,8 +151,13 @@ export default function AgentDemo() {
                     </a>
                   )}
                   {result?.status === "failed" && (
-                    <span className="text-xs text-red-500" title={result.error}>
-                      failed
+                    <span
+                      className="text-xs text-red-500 max-w-[260px] text-right"
+                      title={result.error}
+                    >
+                      {result.error?.includes("refill pending")
+                        ? "agent wallet low on devnet USDC"
+                        : "failed"}
                     </span>
                   )}
                 </div>

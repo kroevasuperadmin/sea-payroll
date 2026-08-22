@@ -12,7 +12,12 @@ import {
   getMint,
 } from "@solana/spl-token";
 import { getAgentKeypair } from "@/lib/agentWallet";
-import { DEVNET_RPC, USDC_DEVNET_MINT, explorerAddressUrl } from "@/lib/solana";
+import {
+  DEVNET_RPC,
+  USDC_DEVNET_MINT,
+  explorerAddressUrl,
+  getUsdcBalance,
+} from "@/lib/solana";
 import { AGENT_TASKS } from "@/lib/agentTasks";
 
 const MEMO_PROGRAM_ID = new PublicKey(
@@ -61,6 +66,16 @@ export async function POST(req: NextRequest) {
     const connection = new Connection(DEVNET_RPC, "confirmed");
     const agent = getAgentKeypair();
     const worker = new PublicKey(workerAddress);
+
+    const agentBalance = await getUsdcBalance(connection, agent.publicKey);
+    if (agentBalance < amount) {
+      return NextResponse.json(
+        {
+          error: `Agent wallet holds ${agentBalance.toFixed(2)} devnet USDC, task needs ${amount.toFixed(2)} — refill pending`,
+        },
+        { status: 503 }
+      );
+    }
 
     const mintInfo = await getMint(connection, USDC_DEVNET_MINT);
     const decimals = mintInfo.decimals;
