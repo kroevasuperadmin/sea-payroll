@@ -156,7 +156,7 @@ export default function Home() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
-            Solana Devnet
+            USDC Payroll · Southeast Asia
           </p>
           <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
             Tiba
@@ -180,9 +180,9 @@ export default function Home() {
           </div>
           <a
             href="/agent"
-            className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
+            className="rounded-full bg-[#E3A63B] text-[#16343A] px-5 py-2.5 text-sm font-semibold hover:bg-[#d3962b] transition-colors text-center whitespace-nowrap"
           >
-            🤖 Autonomous agent demo →
+            Agent demo →
           </a>
         </div>
       </header>
@@ -312,6 +312,11 @@ export default function Home() {
         </button>
 
         {status && <p className="text-sm text-[#5A6B70]">{status}</p>}
+        {!connected && !status && (
+          <p className="text-sm text-[#5A6B70]">
+            Connect a wallet set to <span className="font-medium">Solana Devnet</span> to pay — free test USDC at faucet.circle.com.
+          </p>
+        )}
       </section>
 
       {history.length > 0 && (
