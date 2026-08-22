@@ -1,335 +1,259 @@
-"use client";
+import Link from "next/link";
 
-import { useCallback, useMemo, useState } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { PublicKey } from "@solana/web3.js";
-import {
-  MAX_BATCH_SIZE,
-  buildBatchPaymentTx,
-  explorerAddressUrl,
-  explorerTxUrl,
-  getUsdcBalance,
-} from "@/lib/solana";
-
-interface WorkerRow {
-  id: string;
-  name: string;
-  address: string;
-  amount: string;
-}
-
-interface HistoryEntry {
-  signature: string;
-  workerCount: number;
-  total: number;
-  timestamp: number;
-}
-
-const STARTER_WORKERS: WorkerRow[] = [
+const RECENT_ACTIVITY = [
   {
-    id: "w1",
-    name: "Maria — Manila (delivery rider)",
-    address: "VYmSFKPM6oxW26hhpVsZ55ST2SyJQWCidQvPo4xLdRJ",
-    amount: "25",
+    label: "Batch payroll · 3 workers",
+    amount: "84.50 USDC",
+    status: "Success",
+    sig: "zYhQ33EviLihVSYNz95VKtsRqSaWqh5EZDUnwEZk5DQmvaqZFzF4rkEHQ2KDC3nLJUTCJZTUaHTRzBieSq9YUYZ",
   },
   {
-    id: "w2",
-    name: "Budi — Jakarta (freelance designer)",
-    address: "CGJ2DbQtFs4fas9r3BSKqKBZ3JeRXnboLZoBfde6v8Zz",
-    amount: "40",
+    label: "AI agent · Delivery #482 verified",
+    amount: "3.50 USDC",
+    status: "Success",
+    sig: "5Bf6aTsCLpHq2dZdDQd8eGP16gxW67H6MWxyCUABSyP8tA1tWK9evxhGY2AUSca2dXhkjF45XSA3YE4jdMA4R4qf",
   },
   {
-    id: "w3",
-    name: "Linh — Ho Chi Minh City (virtual assistant)",
-    address: "7DLdKZEzZgpLEmGVaWFwE3mtAbxc8Uf1L7YHABzkoPqG",
-    amount: "18.5",
+    label: "AI agent · Design API call #1187",
+    amount: "1.20 USDC",
+    status: "Success",
+    sig: "57v1vaHo9mi17GTgLMpgeWgXP1MkajPRdsQ89hYkVSyQhJqjgBeAjiDPSYFazMXuhhEuFM9qN6Lngu7QJY5MRGdB",
   },
 ];
 
-function isValidAddress(addr: string): boolean {
-  try {
-    // eslint-disable-next-line no-new
-    new PublicKey(addr);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const FEATURES = [
+  {
+    title: "Pay instantly across Southeast Asia",
+    body: "One atomic Solana transaction settles every worker at once — Manila, Jakarta, Ho Chi Minh City, all in one click.",
+  },
+  {
+    title: "Let AI agents pay autonomously",
+    body: "No human approval step. An agent verifies a task is done and fires a real, signed on-chain payment itself — true machine-to-machine settlement.",
+  },
+  {
+    title: "Every payment, publicly verifiable",
+    body: "No trust-me ledger. Every transfer is a real USDC-Dev transaction, viewable by anyone on Solana Explorer.",
+  },
+];
 
-export default function Home() {
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction, connected } = useWallet();
+const STEPS = [
+  {
+    n: "01",
+    title: "Connect a wallet",
+    body: "Any Solana wallet — Phantom, Solflare, Backpack — via the Wallet Standard. No account, no signup.",
+  },
+  {
+    n: "02",
+    title: "Add your workers, or let your agent",
+    body: "List who's owed what, or wire an AI agent to add payments the moment it verifies work is complete.",
+  },
+  {
+    n: "03",
+    title: "One click. Everyone's paid.",
+    body: "A single atomic transaction settles the whole batch — instantly, and permanently verifiable on-chain.",
+  },
+];
 
-  const [workers, setWorkers] = useState<WorkerRow[]>(STARTER_WORKERS);
-  const [status, setStatus] = useState<string>("");
-  const [busy, setBusy] = useState(false);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
-
-  const total = useMemo(
-    () => workers.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0),
-    [workers]
-  );
-
-  const refreshBalance = useCallback(async () => {
-    if (!publicKey) return;
-    const bal = await getUsdcBalance(connection, publicKey);
-    setUsdcBalance(bal);
-  }, [connection, publicKey]);
-
-  const updateWorker = (id: string, field: keyof WorkerRow, value: string) => {
-    setWorkers((rows) =>
-      rows.map((r) => (r.id === id ? { ...r, [field]: value } : r))
-    );
-  };
-
-  const addWorker = () => {
-    if (workers.length >= MAX_BATCH_SIZE) return;
-    setWorkers((rows) => [
-      ...rows,
-      { id: `w${Date.now()}`, name: "", address: "", amount: "" },
-    ]);
-  };
-
-  const removeWorker = (id: string) => {
-    setWorkers((rows) => rows.filter((r) => r.id !== id));
-  };
-
-  const canPay =
-    connected &&
-    !busy &&
-    workers.length > 0 &&
-    workers.every(
-      (w) => isValidAddress(w.address) && (parseFloat(w.amount) || 0) > 0
-    );
-
-  const payAll = async () => {
-    if (!publicKey) return;
-    setBusy(true);
-    setStatus("Building transaction…");
-    try {
-      const payments = workers.map((w) => ({
-        name: w.name,
-        address: w.address,
-        amount: parseFloat(w.amount),
-      }));
-      const tx = await buildBatchPaymentTx(connection, publicKey, payments);
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
-
-      setStatus("Waiting for wallet approval…");
-      const signature = await sendTransaction(tx, connection);
-
-      setStatus("Confirming on devnet…");
-      await connection.confirmTransaction(
-        { signature, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
-
-      setStatus(`Paid ${workers.length} workers — confirmed.`);
-      setHistory((h) => [
-        {
-          signature,
-          workerCount: workers.length,
-          total,
-          timestamp: Date.now(),
-        },
-        ...h,
-      ]);
-      await refreshBalance();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setStatus(`Failed: ${message}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
+export default function Landing() {
   return (
-    <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
-            Solana Lab · DevLeague 2026
-          </p>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
-            Tiba
-          </h1>
-          <p className="text-sm text-[#5A6B70] mt-3 max-w-sm">
-            SEA Payroll, built on Tiba — pay your Southeast Asian gig workers
-            in USDC, one click, one atomic Solana transaction, instantly
-            verifiable.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-3">
-          <div className="[&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!bg-[#123B63] [&_.wallet-adapter-button]:!text-white [&_.wallet-adapter-button]:!font-semibold [&_.wallet-adapter-button]:!text-sm">
-            <WalletMultiButton />
-          </div>
-          <a
-            href="/agent"
-            className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
-          >
-            🤖 AI Agent autonomous-pay demo →
-          </a>
-        </div>
-      </header>
+    <div className="flex-1 flex flex-col">
+      <div className="text-center text-xs py-2 bg-[#123B63] text-white">
+        Built for Superteam Malaysia's Solana Lab · DevLeague 2026
+      </div>
 
-      {connected && publicKey && (
-        <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 flex flex-col gap-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[#5A6B70]">Employer wallet</span>
-            <a
-              href={explorerAddressUrl(publicKey.toBase58())}
-              target="_blank"
-              rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63]"
-            >
-              {publicKey.toBase58()}
-            </a>
+      <nav className="flex items-center justify-between px-6 sm:px-10 py-5 max-w-6xl mx-auto w-full">
+        <span className="text-xl font-extrabold tracking-tight text-[#123B63]">
+          Tiba
+        </span>
+        <div className="hidden sm:flex items-center gap-8 text-sm text-[#5A6B70]">
+          <Link href="/app" className="hover:text-[#123B63] transition-colors">
+            Product
+          </Link>
+          <Link href="/app/agent" className="hover:text-[#123B63] transition-colors">
+            AI Agent
+          </Link>
+          <Link href="/docs" className="hover:text-[#123B63] transition-colors">
+            Docs
+          </Link>
+          <Link href="/pricing" className="hover:text-[#123B63] transition-colors">
+            Pricing
+          </Link>
+        </div>
+        <Link
+          href="/app"
+          className="rounded-full bg-[#123B63] text-white text-sm font-semibold px-5 py-2.5 hover:bg-[#0d2c4b] transition-colors"
+        >
+          Open App
+        </Link>
+      </nav>
+
+      <section className="text-center px-6 pt-14 pb-16 max-w-3xl mx-auto">
+        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-[#123B63]">
+          Payments that arrive
+          <br />
+          when work is <span className="text-[#E3A63B]">done</span>.
+        </h1>
+        <p className="text-base text-[#5A6B70] mt-6 max-w-xl mx-auto">
+          Tiba pays Southeast Asian gig workers in USDC — one atomic Solana
+          transaction, instantly verifiable. Or let an AI agent pay them
+          autonomously the moment it verifies the work.
+        </p>
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <Link
+            href="/app"
+            className="rounded-full bg-[#123B63] text-white text-sm font-semibold px-6 py-3 hover:bg-[#0d2c4b] transition-colors"
+          >
+            Get Started
+          </Link>
+          <Link
+            href="/app/agent"
+            className="rounded-full border border-[#123B63]/20 text-[#123B63] text-sm font-semibold px-6 py-3 hover:border-[#123B63] transition-colors"
+          >
+            See the AI agent demo
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 border-t border-[#123B63]/10 max-w-6xl mx-auto w-full">
+        {FEATURES.map((f, i) => (
+          <div
+            key={f.title}
+            className={`px-8 py-10 ${
+              i > 0 ? "sm:border-l border-[#123B63]/10" : ""
+            } ${i > 0 ? "border-t sm:border-t-0 border-[#123B63]/10" : ""}`}
+          >
+            <h3 className="font-semibold text-[#123B63] mb-2">{f.title}</h3>
+            <p className="text-sm text-[#5A6B70]">{f.body}</p>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#5A6B70]">Devnet USDC balance</span>
-            <span className="flex items-center gap-2">
-              {usdcBalance !== null ? `${usdcBalance.toFixed(2)} USDC` : "—"}
-              <button
-                onClick={refreshBalance}
-                className="text-xs underline text-[#5A6B70] hover:text-[#123B63]"
-              >
-                refresh
-              </button>
+        ))}
+      </section>
+
+      <section className="max-w-2xl mx-auto w-full px-6 py-16">
+        <div className="rounded-2xl border border-[#123B63]/12 bg-white overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#123B63]/10 flex items-center justify-between">
+            <span className="text-[11px] tracking-[0.15em] uppercase text-[#5A6B70]">
+              Recent activity
             </span>
+            <span className="text-[11px] text-[#5A6B70]">Solana Devnet</span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-[#5A6B70] pt-1 border-t border-[#123B63]/10 mt-1">
+          {RECENT_ACTIVITY.map((r) => (
             <a
-              className="underline hover:text-[#123B63]"
+              key={r.sig}
+              href={`https://explorer.solana.com/tx/${r.sig}?cluster=devnet`}
               target="_blank"
               rel="noreferrer"
-              href="https://faucet.solana.com"
+              className="flex items-center justify-between px-5 py-3.5 text-sm border-b last:border-b-0 border-[#123B63]/8 hover:bg-[#123B63]/[0.03] transition-colors"
             >
-              Get devnet SOL (gas)
+              <span className="text-[#16343A]">{r.label}</span>
+              <span className="flex items-center gap-4">
+                <span className="font-mono text-[#5A6B70]">{r.amount}</span>
+                <span className="text-xs text-[#0F766E]">{r.status}</span>
+              </span>
             </a>
-            <a
-              className="underline hover:text-[#123B63]"
-              target="_blank"
-              rel="noreferrer"
-              href="https://faucet.circle.com"
-            >
-              Get devnet USDC
-            </a>
-          </div>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
-            Workers to pay
-          </h2>
-          <button
-            onClick={addWorker}
-            disabled={workers.length >= MAX_BATCH_SIZE}
-            className="text-xs px-3.5 py-1.5 rounded-full border border-[#123B63]/20 hover:border-[#123B63] hover:text-[#123B63] transition-colors disabled:opacity-30 disabled:hover:border-[#123B63]/20 disabled:hover:text-inherit"
-          >
-            + Add worker
-          </button>
+          ))}
         </div>
+        <p className="text-center text-xs text-[#5A6B70] mt-3">
+          Real transactions, sent live during development — click any row to
+          verify on Solana Explorer.
+        </p>
+      </section>
 
-        <div className="flex flex-col gap-2">
-          {workers.map((w) => (
-            <div
-              key={w.id}
-              className="grid grid-cols-[1fr_1fr_100px_28px] gap-2 items-center"
-            >
-              <input
-                value={w.name}
-                onChange={(e) => updateWorker(w.id, "name", e.target.value)}
-                placeholder="Worker name"
-                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm outline-none focus:border-[#123B63]/60 transition-colors"
-              />
-              <input
-                value={w.address}
-                onChange={(e) => updateWorker(w.id, "address", e.target.value)}
-                placeholder="Solana devnet address"
-                className={`rounded-lg border bg-white px-3 py-2 text-sm font-mono outline-none transition-colors ${
-                  w.address && !isValidAddress(w.address)
-                    ? "border-red-400/60"
-                    : "border-[#123B63]/15 focus:border-[#123B63]/60"
-                }`}
-              />
-              <input
-                value={w.amount}
-                onChange={(e) => updateWorker(w.id, "amount", e.target.value)}
-                placeholder="USDC"
-                inputMode="decimal"
-                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm text-right outline-none focus:border-[#123B63]/60 transition-colors"
-              />
-              <button
-                onClick={() => removeWorker(w.id)}
-                aria-label="Remove worker"
-                className="text-[#5A6B70] hover:text-red-500 text-sm transition-colors"
-              >
-                ✕
-              </button>
+      <section className="border-t border-[#123B63]/10 max-w-6xl mx-auto w-full px-6 py-16">
+        <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] text-center mb-10">
+          How it works
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+          {STEPS.map((s) => (
+            <div key={s.n}>
+              <span className="text-xs font-mono text-[#E3A63B]">{s.n}</span>
+              <h3 className="font-semibold text-[#123B63] mt-1 mb-2">
+                {s.title}
+              </h3>
+              <p className="text-sm text-[#5A6B70]">{s.body}</p>
             </div>
           ))}
         </div>
-
-        <div className="flex items-center justify-between pt-3 border-t border-[#123B63]/10">
-          <span className="text-sm text-[#5A6B70]">
-            {workers.length} worker{workers.length === 1 ? "" : "s"} · max{" "}
-            {MAX_BATCH_SIZE} per batch
-          </span>
-          <span className="font-semibold text-[#123B63]">
-            {total.toFixed(2)} USDC total
-          </span>
-        </div>
-
-        <button
-          onClick={payAll}
-          disabled={!canPay}
-          className="mt-2 rounded-full bg-[#E3A63B] text-[#16343A] py-3 font-semibold text-sm disabled:opacity-30 disabled:bg-[#123B63]/10 disabled:text-[#5A6B70] transition-colors"
-        >
-          {busy ? "Processing…" : `Pay all ${workers.length} workers now`}
-        </button>
-
-        {status && <p className="text-sm text-[#5A6B70]">{status}</p>}
       </section>
 
-      {history.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
-            Payment history (this session)
-          </h2>
-          <div className="flex flex-col gap-1.5 text-sm">
-            {history.map((h) => (
-              <div
-                key={h.signature}
-                className="flex items-center justify-between rounded-lg border border-[#123B63]/12 bg-white px-3.5 py-2.5"
-              >
-                <span>
-                  {h.workerCount} workers · {h.total.toFixed(2)} USDC ·{" "}
-                  {new Date(h.timestamp).toLocaleTimeString()}
-                </span>
-                <a
-                  href={explorerTxUrl(h.signature)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline text-xs font-mono text-[#123B63]"
-                >
-                  view on Explorer ↗
-                </a>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="border-t border-[#123B63]/10 text-center px-6 py-16">
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#123B63]">
+          Ready to pay your team?
+        </h2>
+        <Link
+          href="/app"
+          className="inline-block mt-6 rounded-full bg-[#E3A63B] text-[#16343A] text-sm font-semibold px-6 py-3 hover:brightness-95 transition"
+        >
+          Get Started — it's free on devnet
+        </Link>
+      </section>
 
-      <footer className="mt-auto pt-8 text-xs text-[#5A6B70]/70">
-        Tiba — built for Superteam Malaysia · Solana Lab for DevLeague 2026 ·
-        Devnet demo — real USDC-Dev mint, real Solana transactions.
+      <footer className="border-t border-[#123B63]/10 mt-auto">
+        <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-sm">
+          <div>
+            <p className="text-[#123B63] font-semibold mb-3">Product</p>
+            <div className="flex flex-col gap-2 text-[#5A6B70]">
+              <Link href="/app" className="hover:text-[#123B63]">
+                Payroll
+              </Link>
+              <Link href="/app/agent" className="hover:text-[#123B63]">
+                AI Agent
+              </Link>
+              <Link href="/pricing" className="hover:text-[#123B63]">
+                Pricing
+              </Link>
+            </div>
+          </div>
+          <div>
+            <p className="text-[#123B63] font-semibold mb-3">Resources</p>
+            <div className="flex flex-col gap-2 text-[#5A6B70]">
+              <Link href="/docs" className="hover:text-[#123B63]">
+                Docs
+              </Link>
+              <Link href="/changelog" className="hover:text-[#123B63]">
+                Changelog
+              </Link>
+              <Link href="/status" className="hover:text-[#123B63]">
+                Status
+              </Link>
+              <a
+                href="https://github.com/kroevasuperadmin/sea-payroll"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-[#123B63]"
+              >
+                GitHub
+              </a>
+            </div>
+          </div>
+          <div>
+            <p className="text-[#123B63] font-semibold mb-3">Company</p>
+            <div className="flex flex-col gap-2 text-[#5A6B70]">
+              <Link href="/blog" className="hover:text-[#123B63]">
+                Blog
+              </Link>
+              <a
+                href="https://superteam.fun/earn/listing/solana-lab-for-devleague-2026/"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-[#123B63]"
+              >
+                Superteam Malaysia
+              </a>
+            </div>
+          </div>
+          <div>
+            <p className="text-[#123B63] font-semibold mb-3">Network</p>
+            <div className="flex flex-col gap-2 text-[#5A6B70]">
+              <span>Solana Devnet</span>
+              <span>Circle USDC-Dev</span>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-[#123B63]/10 px-6 py-6 max-w-6xl mx-auto text-xs text-[#5A6B70]/70">
+          Tiba is a devnet hackathon demo built for Superteam Malaysia&apos;s
+          Solana Lab — DevLeague 2026. No real funds are used or at risk;
+          devnet USDC has no monetary value.
+        </div>
       </footer>
     </div>
   );

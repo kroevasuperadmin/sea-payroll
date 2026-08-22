@@ -101,7 +101,7 @@ export default function AgentDemo() {
     <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header>
         <a
-          href="/"
+          href="/app"
           className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
         >
           ← back to Tiba
