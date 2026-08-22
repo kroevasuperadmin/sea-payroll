@@ -178,7 +178,7 @@ export default function Home() {
             href="/agent"
             className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
           >
-            🤖 AI Agent autonomous-pay demo →
+            🤖 Autonomous agent demo →
           </a>
         </div>
       </header>

@@ -118,6 +118,13 @@ export default function AgentDemo() {
           done and the payment fires immediately, signed by its own Solana
           wallet — real machine-to-machine, usage-metered settlement.
         </p>
+        <p className="text-xs text-[#5A6B70] mt-3 max-w-md">
+          In this demo, task verification is a pre-set list (below) rather
+          than a live webhook — the payment itself is 100% real. In
+          production, the trigger source (GPS webhook, API completion event,
+          a model call) is swappable; what stays constant is a machine
+          holding its own signing key and settling value with no human step.
+        </p>
       </header>
 
       <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 text-sm">

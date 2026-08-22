@@ -13,10 +13,13 @@ Two modes, one payment engine:
    Solana wallet address, amount owed) and clicks one button. That triggers **one Solana
    transaction** that pays every worker in USDC **atomically** — either everyone gets
    paid, or nobody does.
-2. **Agent mode** (`/agent`) — an autonomous AI agent pays a worker the instant it
-   verifies a unit of work is complete, with **no human approving each payment**. The
-   agent signs and sends the transaction itself, from its own Solana wallet — real
-   machine-to-machine, pay-per-task settlement.
+2. **Agent mode** (`/agent`) — an autonomous agent pays a worker the instant a unit of
+   work is marked complete, with **no human approving each payment**. The agent signs
+   and sends the transaction itself, from its own Solana wallet — real machine-to-machine,
+   pay-per-task settlement. In this demo the completion trigger is a pre-set task list
+   (not a live webhook or a model call) — the payment itself is real; the trigger source
+   is swappable. What's genuinely novel is a machine holding its own signing key and
+   settling value with zero human step, not the trigger logic.
 
 Every transaction is public and instantly verifiable on Solana Explorer.
 

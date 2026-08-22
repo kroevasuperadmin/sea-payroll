@@ -21,7 +21,7 @@ const editorial = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "Tiba — payments that arrive when work is done",
   description:
-    "Batch-pay Southeast Asian gig workers in USDC in a single atomic Solana transaction, or let an AI agent pay them autonomously the moment a task is verified.",
+    "Batch-pay Southeast Asian gig workers in USDC in a single atomic Solana transaction, or let an autonomous agent pay them the moment a task is verified.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

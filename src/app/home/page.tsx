@@ -8,13 +8,13 @@ const RECENT_ACTIVITY = [
     sig: "zYhQ33EviLihVSYNz95VKtsRqSaWqh5EZDUnwEZk5DQmvaqZFzF4rkEHQ2KDC3nLJUTCJZTUaHTRzBieSq9YUYZ",
   },
   {
-    label: "AI agent · Delivery #482 verified",
+    label: "Agent · Delivery #482 verified",
     amount: "3.50 USDC",
     status: "Success",
     sig: "5Bf6aTsCLpHq2dZdDQd8eGP16gxW67H6MWxyCUABSyP8tA1tWK9evxhGY2AUSca2dXhkjF45XSA3YE4jdMA4R4qf",
   },
   {
-    label: "AI agent · Design API call #1187",
+    label: "Agent · Design API call #1187",
     amount: "1.20 USDC",
     status: "Success",
     sig: "57v1vaHo9mi17GTgLMpgeWgXP1MkajPRdsQ89hYkVSyQhJqjgBeAjiDPSYFazMXuhhEuFM9qN6Lngu7QJY5MRGdB",
@@ -27,7 +27,7 @@ const FEATURES = [
     body: "One atomic Solana transaction settles every worker at once — Manila, Jakarta, Ho Chi Minh City, all in one click.",
   },
   {
-    title: "Let AI agents pay autonomously",
+    title: "Let agents pay autonomously",
     body: "No human approval step. An agent verifies a task is done and fires a real, signed on-chain payment itself — true machine-to-machine settlement.",
   },
   {
@@ -45,7 +45,7 @@ const STEPS = [
   {
     n: "02",
     title: "Add your workers, or let your agent",
-    body: "List who's owed what, or wire an AI agent to add payments the moment it verifies work is complete.",
+    body: "List who's owed what, or wire an autonomous agent to add payments the moment it verifies work is complete.",
   },
   {
     n: "03",
@@ -70,7 +70,7 @@ export default function Landing() {
             Product
           </Link>
           <Link href="/agent" className="hover:text-[#123B63] transition-colors">
-            AI Agent
+            Agent
           </Link>
           <Link href="/docs" className="hover:text-[#123B63] transition-colors">
             Docs
@@ -95,7 +95,7 @@ export default function Landing() {
         </h1>
         <p className="text-lg text-[#16343A]/65 mt-7 max-w-xl mx-auto leading-relaxed">
           Tiba pays Southeast Asian gig workers in USDC — one atomic Solana
-          transaction, instantly verifiable. Or let an AI agent pay them
+          transaction, instantly verifiable. Or let an autonomous agent pay them
           autonomously the moment it verifies the work.
         </p>
         <div className="flex items-center justify-center gap-3 mt-8">
@@ -109,7 +109,7 @@ export default function Landing() {
             href="/agent"
             className="rounded-full border border-[#123B63]/20 text-[#123B63] text-sm font-semibold px-6 py-3 hover:border-[#123B63] transition-colors"
           >
-            See the AI agent demo
+            See the agent demo
           </Link>
         </div>
       </section>
@@ -196,7 +196,7 @@ export default function Landing() {
                 Payroll
               </Link>
               <Link href="/agent" className="hover:text-[#123B63]">
-                AI Agent
+                Agent
               </Link>
               <Link href="/pricing" className="hover:text-[#123B63]">
                 Pricing

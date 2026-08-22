@@ -22,7 +22,7 @@ export default function Status() {
           <span className="text-[#0F766E] text-xs">Operational</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[#16343A]">AI agent endpoint</span>
+          <span className="text-[#16343A]">Agent endpoint</span>
           <span className="text-[#0F766E] text-xs">Operational</span>
         </div>
       </div>

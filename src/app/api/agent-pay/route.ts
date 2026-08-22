@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         keys: [{ pubkey: agent.publicKey, isSigner: true, isWritable: false }],
         programId: MEMO_PROGRAM_ID,
         data: Buffer.from(
-          `AI agent auto-pay: ${reason ?? "task completed"}`,
+          `Agent auto-pay: ${reason ?? "task completed"}`,
           "utf-8"
         ),
       })

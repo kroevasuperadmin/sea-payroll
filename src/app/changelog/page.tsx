@@ -4,7 +4,7 @@ const ENTRIES = [
   {
     date: "22 Aug 2026",
     title: "Tiba launches",
-    body: "Batch payroll for SEA gig workers + autonomous AI-agent pay-per-task, both on Solana devnet.",
+    body: "Batch payroll for SEA gig workers + autonomous agent pay-per-task, both on Solana devnet.",
   },
 ];
 
