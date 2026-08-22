@@ -24,7 +24,7 @@ const RECENT_ACTIVITY = [
 const FEATURES = [
   {
     title: "Pay instantly across Southeast Asia",
-    body: "One atomic Solana transaction settles every worker at once — Manila, Jakarta, Ho Chi Minh City, all in one click.",
+    body: "One Solana transaction settles every worker at once — Manila, Jakarta, Ho Chi Minh City. If any transfer would fail, the whole batch reverts: no partial payroll, a guarantee no bank API gives you across independently-owned accounts.",
   },
   {
     title: "Let agents pay autonomously",

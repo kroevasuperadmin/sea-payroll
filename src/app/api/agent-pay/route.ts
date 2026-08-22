@@ -19,11 +19,11 @@ const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
 );
 
-// Tracks which task ids have already been paid this server instance. This is
-// a best-effort guard for the public demo (a fresh serverless instance won't
-// remember it) — not a substitute for real persistence in production, but it
-// stops naive repeat-clicking or scripted replay against a warm instance.
-const paidTaskIds = new Set<string>();
+// Tracks which task ids have already been paid this server instance, keyed to
+// the signature so a replay returns the original receipt instead of paying
+// twice. Best-effort for the public demo (a fresh serverless instance won't
+// remember it) — not a substitute for real persistence in production.
+const paidTaskIds = new Map<string, string>();
 
 // Autonomous, server-signed payment — no human wallet-approval step. An
 // automated caller hits this endpoint when it has determined a unit of work
@@ -46,11 +46,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (paidTaskIds.has(taskId)) {
-      return NextResponse.json(
-        { error: "Task already paid on this instance" },
-        { status: 409 }
-      );
+    const priorSignature = paidTaskIds.get(taskId);
+    if (priorSignature) {
+      return NextResponse.json({
+        signature: priorSignature,
+        explorerUrl: `https://explorer.solana.com/tx/${priorSignature}?cluster=devnet`,
+        agentAddress: getAgentKeypair().publicKey.toBase58(),
+        replayed: true,
+      });
     }
 
     const { address: workerAddress, amount, reason } = task;
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest) {
       { signature, blockhash, lastValidBlockHeight },
       "confirmed"
     );
-    paidTaskIds.add(taskId);
+    paidTaskIds.set(taskId, signature);
 
     return NextResponse.json({
       signature,

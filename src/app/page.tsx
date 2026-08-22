@@ -2,7 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  WalletModalButton,
+  WalletDisconnectButton,
+} from "@solana/wallet-adapter-react-ui";
 import { PublicKey } from "@solana/web3.js";
 import {
   MAX_BATCH_SIZE,
@@ -159,9 +162,10 @@ export default function Home() {
             Tiba
           </h1>
           <p className="text-base text-[#16343A]/65 mt-3 max-w-sm leading-relaxed">
-            SEA Payroll, built on Tiba — pay your Southeast Asian gig workers
-            in USDC, one click, one atomic Solana transaction, instantly
-            verifiable.
+            Pay your Southeast Asian gig workers in USDC — one click, one
+            Solana transaction. If any single transfer would fail, the whole
+            batch reverts: no partial payroll run, a guarantee no bank API or
+            database gives you across independently-owned accounts.
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
@@ -172,7 +176,7 @@ export default function Home() {
             ← Home
           </a>
           <div className="[&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!bg-[#123B63] [&_.wallet-adapter-button]:!text-white [&_.wallet-adapter-button]:!font-semibold [&_.wallet-adapter-button]:!text-sm">
-            <WalletMultiButton />
+            {connected ? <WalletDisconnectButton /> : <WalletModalButton />}
           </div>
           <a
             href="/agent"
@@ -289,6 +293,10 @@ export default function Home() {
           <span className="text-sm text-[#5A6B70]">
             {workers.length} worker{workers.length === 1 ? "" : "s"} · max{" "}
             {MAX_BATCH_SIZE} per batch
+            <span className="hidden sm:inline">
+              {" "}
+              — Solana&apos;s 1,232-byte transaction limit
+            </span>
           </span>
           <span className="font-semibold text-[#123B63]">
             {total.toFixed(2)} USDC total
