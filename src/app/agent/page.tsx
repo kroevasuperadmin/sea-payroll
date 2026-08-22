@@ -98,15 +98,21 @@ export default function AgentDemo() {
   };
 
   return (
-    <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-10 flex flex-col gap-8">
+    <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header>
-        <a href="/" className="text-xs text-neutral-500 underline">
+        <a
+          href="/"
+          className="text-xs text-[#9B9A94] hover:text-[#F4F4F2] transition-colors"
+        >
           ← back to SEA Payroll
         </a>
-        <h1 className="text-2xl font-semibold tracking-tight mt-2">
-          AI Agent — Autonomous Pay-Per-Task
+        <p className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94] mt-4 mb-3">
+          AI + Agentic Commerce
+        </p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
+          Autonomous <span className="text-[#1EDBFF]">Pay-Per-Task</span>
         </h1>
-        <p className="text-sm text-neutral-500 mt-1">
+        <p className="text-sm text-[#9B9A94] mt-3 max-w-md">
           No human approves each payment. An automated agent (a webhook, a
           verification job, a completion check) confirms a unit of work is
           done and the payment fires immediately, signed by its own Solana
@@ -114,20 +120,23 @@ export default function AgentDemo() {
         </p>
       </header>
 
-      <section className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 text-sm">
+      <section className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 text-sm backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <span className="text-neutral-500">Agent wallet</span>
+          <span className="text-[#9B9A94]">Agent wallet</span>
           {agentAddress ? (
             <a
               href={`https://explorer.solana.com/address/${agentAddress}?cluster=devnet`}
               target="_blank"
               rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted"
+              className="font-mono text-xs underline decoration-dotted decoration-[#9B9A94] hover:text-[#1EDBFF]"
             >
               {agentAddress}
             </a>
           ) : (
-            <button onClick={loadAgentAddress} className="text-xs underline">
+            <button
+              onClick={loadAgentAddress}
+              className="text-xs underline text-[#9B9A94] hover:text-[#1EDBFF]"
+            >
               load address
             </button>
           )}
@@ -136,11 +145,13 @@ export default function AgentDemo() {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-medium">Pending agent-verified tasks</h2>
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#9B9A94]">
+            Pending agent-verified tasks
+          </h2>
           <button
             onClick={runAgentCycle}
             disabled={running}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-4 py-2 text-sm font-medium disabled:opacity-40"
+            className="rounded-full bg-[#1EDBFF] text-black px-5 py-2 text-sm font-semibold disabled:opacity-25 disabled:bg-white/15 disabled:text-[#9B9A94] transition-colors"
           >
             {running ? "Agent running…" : "▶ Run agent cycle"}
           </button>
@@ -152,30 +163,34 @@ export default function AgentDemo() {
             return (
               <div
                 key={task.id}
-                className="rounded-md border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm flex items-center justify-between gap-3"
+                className="rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-sm flex items-center justify-between gap-3"
               >
                 <div>
                   <div className="font-medium">{task.worker}</div>
-                  <div className="text-neutral-500 text-xs">{task.reason}</div>
+                  <div className="text-[#9B9A94] text-xs mt-0.5">{task.reason}</div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-mono text-xs">{task.amount.toFixed(2)} USDC</span>
-                  {!result && <span className="text-xs text-neutral-400">queued</span>}
+                  <span className="font-mono text-xs text-[#9B9A94]">
+                    {task.amount.toFixed(2)} USDC
+                  </span>
+                  {!result && (
+                    <span className="text-xs text-[#9B9A94]/60">queued</span>
+                  )}
                   {result?.status === "running" && (
-                    <span className="text-xs text-amber-500">paying…</span>
+                    <span className="text-xs text-amber-400">paying…</span>
                   )}
                   {result?.status === "paid" && result.signature && (
                     <a
                       href={explorerTxUrl(result.signature)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs underline text-green-600"
+                      className="text-xs underline text-[#1EDBFF]"
                     >
                       paid ↗
                     </a>
                   )}
                   {result?.status === "failed" && (
-                    <span className="text-xs text-red-500" title={result.error}>
+                    <span className="text-xs text-red-400" title={result.error}>
                       failed
                     </span>
                   )}
@@ -186,9 +201,9 @@ export default function AgentDemo() {
         </div>
       </section>
 
-      <footer className="mt-auto pt-8 text-xs text-neutral-400">
+      <footer className="mt-auto pt-8 text-xs text-[#9B9A94]/70">
         Same on-chain engine as SEA Payroll — here triggered autonomously by
-        code instead of a human clicking "pay." Devnet demo.
+        code instead of a human clicking &quot;pay.&quot; Devnet demo.
       </footer>
     </div>
   );
