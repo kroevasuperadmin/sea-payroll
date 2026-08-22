@@ -243,42 +243,44 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 sm:gap-2">
           {workers.map((w) => (
             <div
               key={w.id}
-              className="grid grid-cols-[1fr_1fr_100px_28px] gap-2 items-center"
+              className="flex flex-col gap-2 rounded-lg border border-[#123B63]/12 bg-white p-3 sm:p-0 sm:border-0 sm:bg-transparent sm:grid sm:grid-cols-[1fr_1fr_100px_44px] sm:items-center"
             >
               <input
                 value={w.name}
                 onChange={(e) => updateWorker(w.id, "name", e.target.value)}
                 placeholder="Worker name"
-                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm outline-none focus:border-[#123B63]/60 transition-colors"
+                className="w-full rounded-lg border border-[#123B63]/15 bg-white px-3 py-2.5 text-base outline-none focus:border-[#123B63]/60 transition-colors"
               />
               <input
                 value={w.address}
                 onChange={(e) => updateWorker(w.id, "address", e.target.value)}
                 placeholder="Solana devnet address"
-                className={`rounded-lg border bg-white px-3 py-2 text-sm font-mono outline-none transition-colors ${
+                className={`w-full rounded-lg border bg-white px-3 py-2.5 text-base font-mono outline-none transition-colors ${
                   w.address && !isValidAddress(w.address)
                     ? "border-red-400/60"
                     : "border-[#123B63]/15 focus:border-[#123B63]/60"
                 }`}
               />
-              <input
-                value={w.amount}
-                onChange={(e) => updateWorker(w.id, "amount", e.target.value)}
-                placeholder="USDC"
-                inputMode="decimal"
-                className="rounded-lg border border-[#123B63]/15 bg-white px-3 py-2 text-sm text-right outline-none focus:border-[#123B63]/60 transition-colors"
-              />
-              <button
-                onClick={() => removeWorker(w.id)}
-                aria-label="Remove worker"
-                className="text-[#5A6B70] hover:text-red-500 text-sm transition-colors"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2 sm:contents">
+                <input
+                  value={w.amount}
+                  onChange={(e) => updateWorker(w.id, "amount", e.target.value)}
+                  placeholder="USDC"
+                  inputMode="decimal"
+                  className="flex-1 sm:flex-none w-full rounded-lg border border-[#123B63]/15 bg-white px-3 py-2.5 text-base text-right outline-none focus:border-[#123B63]/60 transition-colors"
+                />
+                <button
+                  onClick={() => removeWorker(w.id)}
+                  aria-label="Remove worker"
+                  className="h-11 w-11 shrink-0 flex items-center justify-center rounded-lg text-[#5A6B70] hover:text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
         </div>

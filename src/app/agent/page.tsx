@@ -121,14 +121,14 @@ export default function AgentDemo() {
       </header>
 
       <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 text-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <span className="text-[#5A6B70]">Agent wallet</span>
           {agentAddress ? (
             <a
               href={`https://explorer.solana.com/address/${agentAddress}?cluster=devnet`}
               target="_blank"
               rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63]"
+              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63] break-all"
             >
               {agentAddress}
             </a>
@@ -163,7 +163,7 @@ export default function AgentDemo() {
             return (
               <div
                 key={task.id}
-                className="rounded-lg border border-[#123B63]/12 bg-white px-4 py-3 text-sm flex items-center justify-between gap-3"
+                className="rounded-lg border border-[#123B63]/12 bg-white px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
               >
                 <div>
                   <div className="font-medium">{task.worker}</div>

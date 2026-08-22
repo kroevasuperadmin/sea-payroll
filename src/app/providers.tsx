@@ -1,24 +1,32 @@
 "use client";
 
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useMemo } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { DEVNET_RPC } from "@/lib/solana";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
-// No legacy adapters passed in deliberately: modern wallets (Phantom,
-// Solflare, Backpack, and their mobile in-app browsers) all self-register
-// via the Wallet Standard. Explicitly instantiating the old
-// @solana/wallet-adapter-phantom class alongside that creates a duplicate,
-// stale registration that hangs on "Connecting..." instead of resolving.
+// Phantom and Solflare are passed explicitly (not just relying on Wallet
+// Standard auto-detection) because their adapters implement mobile deep
+// linking: on a phone with no browser extension, tapping the button opens
+// the Phantom/Solflare app to approve (or the App Store if not installed).
+// Wallet-adapter-react dedupes against any Wallet-Standard-injected instance
+// of the same wallet, so this is safe alongside desktop extensions too.
 export const Providers: FC<{ children: ReactNode }> = ({ children }) => {
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
+    []
+  );
+
   return (
     <ConnectionProvider endpoint={DEVNET_RPC}>
-      <WalletProvider wallets={[]} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
