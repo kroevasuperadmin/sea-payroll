@@ -3,7 +3,7 @@ import Link from "next/link";
 const RECENT_ACTIVITY = [
   {
     label: "Batch payroll · 3 workers",
-    amount: "84.50 USDC",
+    amount: "4.50 USDC",
     status: "Success",
     sig: "zYhQ33EviLihVSYNz95VKtsRqSaWqh5EZDUnwEZk5DQmvaqZFzF4rkEHQ2KDC3nLJUTCJZTUaHTRzBieSq9YUYZ",
   },
