@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, CARD_CLASS, Eyebrow } from "@/components/ui";
 
 const ENTRIES = [
   {
@@ -11,9 +11,7 @@ const ENTRIES = [
 export default function Changelog() {
   return (
     <div className="flex-1 max-w-xl mx-auto w-full px-6 py-24">
-      <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
-        Changelog
-      </p>
+      <Eyebrow className="mb-3">Changelog</Eyebrow>
       <h1 className="text-3xl font-extrabold text-[#123B63] mb-10">
         What&apos;s new
       </h1>
@@ -21,7 +19,7 @@ export default function Changelog() {
         {ENTRIES.map((e) => (
           <div
             key={e.date}
-            className="rounded-lg border border-[#123B63]/12 bg-white p-5"
+            className={`p-5 ${CARD_CLASS}`}
           >
             <p className="text-xs font-mono text-[#5A6B70]">{e.date}</p>
             <h2 className="font-semibold text-[#123B63] mt-1">{e.title}</h2>
@@ -29,9 +27,7 @@ export default function Changelog() {
           </div>
         ))}
       </div>
-      <Link href="/" className="text-sm text-[#123B63] underline mt-8 inline-block">
-        ← Try the app
-      </Link>
+      <BackLink className="mt-8 inline-block">← Try the app</BackLink>
     </div>
   );
 }

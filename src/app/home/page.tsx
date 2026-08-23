@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Eyebrow, ExternalLink, NavLink } from "@/components/ui";
+import { explorerTxUrl } from "@/lib/solana";
+import { REPO_URL } from "@/lib/site";
 
 const RECENT_ACTIVITY = [
   {
@@ -36,6 +39,44 @@ const FEATURES = [
   },
 ];
 
+const NAV_LINKS = [
+  { href: "/", label: "Product" },
+  { href: "/agent", label: "Agent" },
+  { href: "/docs", label: "Docs" },
+  { href: "/pricing", label: "Pricing" },
+];
+
+const FOOTER_GROUPS: {
+  title: string;
+  links: { label: string; href?: string; external?: boolean }[];
+}[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "Payroll", href: "/" },
+      { label: "Agent", href: "/agent" },
+      { label: "Pricing", href: "/pricing" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Docs", href: "/docs" },
+      { label: "Changelog", href: "/changelog" },
+      { label: "Status", href: "/status" },
+      { label: "GitHub", href: REPO_URL, external: true },
+    ],
+  },
+  {
+    title: "Company",
+    links: [{ label: "Blog", href: "/blog" }],
+  },
+  {
+    title: "Network",
+    links: [{ label: "Solana Devnet" }, { label: "Circle USDC-Dev" }],
+  },
+];
+
 const STEPS = [
   {
     n: "01",
@@ -61,19 +102,12 @@ export default function Landing() {
         <span className="text-xl font-extrabold tracking-tight text-[#123B63]">
           Tiba
         </span>
-        <div className="hidden sm:flex items-center gap-8 text-sm text-[#5A6B70]">
-          <Link href="/" className="hover:text-[#123B63] transition-colors">
-            Product
-          </Link>
-          <Link href="/agent" className="hover:text-[#123B63] transition-colors">
-            Agent
-          </Link>
-          <Link href="/docs" className="hover:text-[#123B63] transition-colors">
-            Docs
-          </Link>
-          <Link href="/pricing" className="hover:text-[#123B63] transition-colors">
-            Pricing
-          </Link>
+        <div className="hidden sm:flex items-center gap-8 text-sm">
+          {NAV_LINKS.map((link) => (
+            <NavLink key={link.href} href={link.href}>
+              {link.label}
+            </NavLink>
+          ))}
         </div>
         <Link
           href="/"
@@ -133,11 +167,9 @@ export default function Landing() {
             <span className="text-[11px] text-[#5A6B70]">Solana Devnet</span>
           </div>
           {RECENT_ACTIVITY.map((r) => (
-            <a
+            <ExternalLink
               key={r.sig}
-              href={`https://explorer.solana.com/tx/${r.sig}?cluster=devnet`}
-              target="_blank"
-              rel="noreferrer"
+              href={explorerTxUrl(r.sig)}
               className="flex items-center justify-between px-5 py-3.5 text-sm border-b last:border-b-0 border-[#123B63]/8 hover:bg-[#123B63]/[0.03] transition-colors"
             >
               <span className="text-[#16343A]">{r.label}</span>
@@ -145,7 +177,7 @@ export default function Landing() {
                 <span className="font-mono text-[#5A6B70]">{r.amount}</span>
                 <span className="text-xs text-[#0F766E]">{r.status}</span>
               </span>
-            </a>
+            </ExternalLink>
           ))}
         </div>
         <p className="text-center text-xs text-[#5A6B70] mt-3">
@@ -155,9 +187,7 @@ export default function Landing() {
       </section>
 
       <section className="border-t border-[#123B63]/10 max-w-6xl mx-auto w-full px-6 py-16">
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] text-center mb-10">
-          How it works
-        </p>
+        <Eyebrow className="text-center mb-10">How it works</Eyebrow>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
           {STEPS.map((s) => (
             <div key={s.n}>
@@ -185,57 +215,36 @@ export default function Landing() {
 
       <footer className="border-t border-[#123B63]/10 mt-auto">
         <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-sm">
-          <div>
-            <p className="text-[#123B63] font-semibold mb-3">Product</p>
-            <div className="flex flex-col gap-2 text-[#5A6B70]">
-              <Link href="/" className="hover:text-[#123B63]">
-                Payroll
-              </Link>
-              <Link href="/agent" className="hover:text-[#123B63]">
-                Agent
-              </Link>
-              <Link href="/pricing" className="hover:text-[#123B63]">
-                Pricing
-              </Link>
+          {FOOTER_GROUPS.map((group) => (
+            <div key={group.title}>
+              <p className="text-[#123B63] font-semibold mb-3">{group.title}</p>
+              <div className="flex flex-col gap-2 text-[#5A6B70]">
+                {group.links.map((link) => {
+                  if (!link.href) return <span key={link.label}>{link.label}</span>;
+                  if (link.external) {
+                    return (
+                      <ExternalLink
+                        key={link.label}
+                        href={link.href}
+                        className="hover:text-[#123B63]"
+                      >
+                        {link.label}
+                      </ExternalLink>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className="hover:text-[#123B63]"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="text-[#123B63] font-semibold mb-3">Resources</p>
-            <div className="flex flex-col gap-2 text-[#5A6B70]">
-              <Link href="/docs" className="hover:text-[#123B63]">
-                Docs
-              </Link>
-              <Link href="/changelog" className="hover:text-[#123B63]">
-                Changelog
-              </Link>
-              <Link href="/status" className="hover:text-[#123B63]">
-                Status
-              </Link>
-              <a
-                href="https://github.com/kroevasuperadmin/sea-payroll"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#123B63]"
-              >
-                GitHub
-              </a>
-            </div>
-          </div>
-          <div>
-            <p className="text-[#123B63] font-semibold mb-3">Company</p>
-            <div className="flex flex-col gap-2 text-[#5A6B70]">
-              <Link href="/blog" className="hover:text-[#123B63]">
-                Blog
-              </Link>
-            </div>
-          </div>
-          <div>
-            <p className="text-[#123B63] font-semibold mb-3">Network</p>
-            <div className="flex flex-col gap-2 text-[#5A6B70]">
-              <span>Solana Devnet</span>
-              <span>Circle USDC-Dev</span>
-            </div>
-          </div>
+          ))}
         </div>
         <div className="border-t border-[#123B63]/10 px-6 py-6 max-w-6xl mx-auto text-xs text-[#5A6B70]/70">
           Tiba is a Solana devnet demo. No real funds are used or at risk;

@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   Transaction,
   TransactionInstruction,
@@ -41,6 +42,61 @@ export interface WorkerPayment {
 // a transferChecked instruction).
 export const MAX_BATCH_SIZE = 8;
 
+export function isValidAddress(address: string): boolean {
+  try {
+    new PublicKey(address);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Builds the one transaction that settles every payment atomically: a memo
+// recording the audit note, then an idempotent ATA-create plus a
+// transferChecked per recipient. Shared by the employer-signed payroll batch
+// and the agent's autonomous single-task payment.
+export async function buildPaymentTx(
+  connection: Connection,
+  payer: PublicKey,
+  payments: WorkerPayment[],
+  memo: string,
+  mint: PublicKey = USDC_DEVNET_MINT
+): Promise<Transaction> {
+  const { decimals } = await getMint(connection, mint);
+  const payerAta = await getAssociatedTokenAddress(mint, payer);
+
+  const tx = new Transaction();
+  tx.add(memoInstruction(memo, payer));
+
+  for (const payment of payments) {
+    const recipient = new PublicKey(payment.address);
+    const recipientAta = await getAssociatedTokenAddress(mint, recipient);
+
+    tx.add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        payer,
+        recipientAta,
+        recipient,
+        mint
+      )
+    );
+
+    const rawAmount = BigInt(Math.round(payment.amount * 10 ** decimals));
+    tx.add(
+      createTransferCheckedInstruction(
+        payerAta,
+        mint,
+        recipientAta,
+        payer,
+        rawAmount,
+        decimals
+      )
+    );
+  }
+
+  return tx;
+}
+
 export async function buildBatchPaymentTx(
   connection: Connection,
   employer: PublicKey,
@@ -52,47 +108,55 @@ export async function buildBatchPaymentTx(
     throw new Error(`Batch too large — max ${MAX_BATCH_SIZE} workers per transaction`);
   }
 
-  const mintInfo = await getMint(connection, mint);
-  const decimals = mintInfo.decimals;
-
-  const employerAta = await getAssociatedTokenAddress(mint, employer);
-
   const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-  const tx = new Transaction();
-  tx.add(
-    memoInstruction(
-      `SEA Payroll batch: ${payments.length} workers, ${totalAmount.toFixed(2)} USDC total`,
-      employer
-    )
+  return buildPaymentTx(
+    connection,
+    employer,
+    payments,
+    `SEA Payroll batch: ${payments.length} workers, ${totalAmount.toFixed(2)} USDC total`,
+    mint
   );
+}
 
-  for (const p of payments) {
-    const workerPubkey = new PublicKey(p.address);
-    const workerAta = await getAssociatedTokenAddress(mint, workerPubkey);
+export interface PreparedTx {
+  blockhash: string;
+  lastValidBlockHeight: number;
+}
 
-    tx.add(
-      createAssociatedTokenAccountIdempotentInstruction(
-        employer,
-        workerAta,
-        workerPubkey,
-        mint
-      )
-    );
+// Stamps a fresh blockhash and fee payer on the transaction, returning the
+// values needed to confirm it afterwards.
+export async function prepareTx(
+  connection: Connection,
+  tx: Transaction,
+  feePayer: PublicKey
+): Promise<PreparedTx> {
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+  tx.recentBlockhash = blockhash;
+  tx.feePayer = feePayer;
+  return { blockhash, lastValidBlockHeight };
+}
 
-    const rawAmount = BigInt(Math.round(p.amount * 10 ** decimals));
-    tx.add(
-      createTransferCheckedInstruction(
-        employerAta,
-        mint,
-        workerAta,
-        employer,
-        rawAmount,
-        decimals
-      )
-    );
-  }
+export async function confirmTx(
+  connection: Connection,
+  signature: string,
+  prepared: PreparedTx
+): Promise<void> {
+  await connection.confirmTransaction({ signature, ...prepared }, "confirmed");
+}
 
-  return tx;
+// Server-side send: the signer is a keypair we hold, so we can sign, send and
+// confirm without any wallet-approval step.
+export async function signSendAndConfirmTx(
+  connection: Connection,
+  tx: Transaction,
+  signer: Keypair
+): Promise<string> {
+  const prepared = await prepareTx(connection, tx, signer.publicKey);
+  tx.sign(signer);
+  const signature = await connection.sendRawTransaction(tx.serialize());
+  await confirmTx(connection, signature, prepared);
+  return signature;
 }
 
 export async function getUsdcBalance(

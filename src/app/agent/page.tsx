@@ -1,8 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { explorerTxUrl } from "@/lib/solana";
+import { explorerAddressUrl, explorerTxUrl } from "@/lib/solana";
+import { errorMessage } from "@/lib/errors";
 import { AGENT_TASKS } from "@/lib/agentTasks";
+import {
+  ADDRESS_LINK_CLASS,
+  CARD_CLASS,
+  Eyebrow,
+  ExternalLink,
+  NavLink,
+  PANEL_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from "@/components/ui";
 
 interface TaskResult {
   taskId: string;
@@ -41,10 +51,13 @@ export default function AgentDemo() {
           [task.id]: { taskId: task.id, status: "paid", signature: data.signature },
         }));
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
         setResults((r) => ({
           ...r,
-          [task.id]: { taskId: task.id, status: "failed", error: message },
+          [task.id]: {
+            taskId: task.id,
+            status: "failed",
+            error: errorMessage(err),
+          },
         }));
       }
     }
@@ -54,15 +67,10 @@ export default function AgentDemo() {
   return (
     <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header>
-        <a
-          href="/"
-          className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
-        >
+        <NavLink href="/" className="text-xs">
           ← back to Tiba
-        </a>
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mt-4 mb-3">
-          Autonomous Payments
-        </p>
+        </NavLink>
+        <Eyebrow className="mt-4 mb-3">Autonomous Payments</Eyebrow>
         <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
           Autonomous <span className="text-[#E3A63B]">Pay-Per-Task</span>
         </h1>
@@ -81,18 +89,16 @@ export default function AgentDemo() {
         </p>
       </header>
 
-      <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 text-sm">
+      <section className={`${PANEL_CLASS} text-sm`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <span className="text-[#5A6B70]">Agent wallet</span>
           {agentAddress ? (
-            <a
-              href={`https://explorer.solana.com/address/${agentAddress}?cluster=devnet`}
-              target="_blank"
-              rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63] break-all"
+            <ExternalLink
+              href={explorerAddressUrl(agentAddress)}
+              className={`${ADDRESS_LINK_CLASS} break-all`}
             >
               {agentAddress}
-            </a>
+            </ExternalLink>
           ) : (
             <button
               onClick={loadAgentAddress}
@@ -106,13 +112,11 @@ export default function AgentDemo() {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
-            Pending agent-verified tasks
-          </h2>
+          <Eyebrow as="h2">Pending agent-verified tasks</Eyebrow>
           <button
             onClick={runAgentCycle}
             disabled={running}
-            className="rounded-full bg-[#E3A63B] text-[#16343A] px-5 py-2 text-sm font-semibold disabled:opacity-30 disabled:bg-[#123B63]/10 disabled:text-[#5A6B70] transition-colors"
+            className={`px-5 py-2 text-sm ${PRIMARY_BUTTON_CLASS}`}
           >
             {running ? "Agent running…" : "▶ Run agent cycle"}
           </button>
@@ -124,7 +128,7 @@ export default function AgentDemo() {
             return (
               <div
                 key={task.id}
-                className="rounded-lg border border-[#123B63]/12 bg-white px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                className={`${CARD_CLASS} px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`}
               >
                 <div>
                   <div className="font-medium">{task.worker}</div>
@@ -141,14 +145,12 @@ export default function AgentDemo() {
                     <span className="text-xs text-[#E3A63B]">paying…</span>
                   )}
                   {result?.status === "paid" && result.signature && (
-                    <a
+                    <ExternalLink
                       href={explorerTxUrl(result.signature)}
-                      target="_blank"
-                      rel="noreferrer"
                       className="text-xs underline text-[#123B63]"
                     >
                       paid ↗
-                    </a>
+                    </ExternalLink>
                   )}
                   {result?.status === "failed" && (
                     <span

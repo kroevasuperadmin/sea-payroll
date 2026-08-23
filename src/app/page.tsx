@@ -1,19 +1,34 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   WalletModalButton,
   WalletDisconnectButton,
 } from "@solana/wallet-adapter-react-ui";
-import { PublicKey } from "@solana/web3.js";
 import {
   MAX_BATCH_SIZE,
   buildBatchPaymentTx,
+  confirmTx,
   explorerAddressUrl,
   explorerTxUrl,
   getUsdcBalance,
+  isValidAddress,
+  prepareTx,
 } from "@/lib/solana";
+import { errorMessage } from "@/lib/errors";
+import { SOL_FAUCET_URL, USDC_FAUCET_URL } from "@/lib/site";
+import {
+  ADDRESS_LINK_CLASS,
+  CARD_CLASS,
+  INPUT_CLASS,
+  Eyebrow,
+  ExternalLink,
+  NavLink,
+  PANEL_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from "@/components/ui";
 
 interface WorkerRow {
   id: string;
@@ -49,16 +64,6 @@ const STARTER_WORKERS: WorkerRow[] = [
     amount: "18.5",
   },
 ];
-
-function isValidAddress(addr: string): boolean {
-  try {
-    // eslint-disable-next-line no-new
-    new PublicKey(addr);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 export default function Home() {
   const { connection } = useConnection();
@@ -118,19 +123,13 @@ export default function Home() {
         amount: parseFloat(w.amount),
       }));
       const tx = await buildBatchPaymentTx(connection, publicKey, payments);
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
+      const prepared = await prepareTx(connection, tx, publicKey);
 
       setStatus("Waiting for wallet approval…");
       const signature = await sendTransaction(tx, connection);
 
       setStatus("Confirming on devnet…");
-      await connection.confirmTransaction(
-        { signature, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
+      await confirmTx(connection, signature, prepared);
 
       setStatus(`Paid ${workers.length} workers — confirmed.`);
       setHistory((h) => [
@@ -144,8 +143,7 @@ export default function Home() {
       ]);
       await refreshBalance();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setStatus(`Failed: ${message}`);
+      setStatus(`Failed: ${errorMessage(err)}`);
     } finally {
       setBusy(false);
     }
@@ -155,9 +153,7 @@ export default function Home() {
     <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mb-3">
-            USDC Payroll · Southeast Asia
-          </p>
+          <Eyebrow className="mb-3">USDC Payroll · Southeast Asia</Eyebrow>
           <h1 className="font-[family-name:var(--font-editorial)] font-normal text-5xl sm:text-6xl leading-[1.05] text-[#123B63]">
             Tiba
           </h1>
@@ -169,36 +165,31 @@ export default function Home() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <a
-            href="/home"
-            className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
-          >
+          <NavLink href="/home" className="text-xs">
             ← Home
-          </a>
+          </NavLink>
           <div className="[&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!bg-[#123B63] [&_.wallet-adapter-button]:!text-white [&_.wallet-adapter-button]:!font-semibold [&_.wallet-adapter-button]:!text-sm">
             {connected ? <WalletDisconnectButton /> : <WalletModalButton />}
           </div>
-          <a
+          <Link
             href="/agent"
             className="rounded-full bg-[#E3A63B] text-[#16343A] px-5 py-2.5 text-sm font-semibold hover:bg-[#d3962b] transition-colors text-center whitespace-nowrap"
           >
             Agent demo →
-          </a>
+          </Link>
         </div>
       </header>
 
       {connected && publicKey && (
-        <section className="rounded-2xl border border-[#123B63]/12 bg-[#123B63]/[0.04] p-5 flex flex-col gap-3 text-sm">
+        <section className={`${PANEL_CLASS} flex flex-col gap-3 text-sm`}>
           <div className="flex items-center justify-between">
             <span className="text-[#5A6B70]">Employer wallet</span>
-            <a
+            <ExternalLink
               href={explorerAddressUrl(publicKey.toBase58())}
-              target="_blank"
-              rel="noreferrer"
-              className="font-mono text-xs underline decoration-dotted decoration-[#5A6B70] hover:text-[#123B63]"
+              className={ADDRESS_LINK_CLASS}
             >
               {publicKey.toBase58()}
-            </a>
+            </ExternalLink>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[#5A6B70]">Devnet USDC balance</span>
@@ -213,31 +204,25 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-4 text-xs text-[#5A6B70] pt-1 border-t border-[#123B63]/10 mt-1">
-            <a
+            <ExternalLink
+              href={SOL_FAUCET_URL}
               className="underline hover:text-[#123B63]"
-              target="_blank"
-              rel="noreferrer"
-              href="https://faucet.solana.com"
             >
               Get devnet SOL (gas)
-            </a>
-            <a
+            </ExternalLink>
+            <ExternalLink
+              href={USDC_FAUCET_URL}
               className="underline hover:text-[#123B63]"
-              target="_blank"
-              rel="noreferrer"
-              href="https://faucet.circle.com"
             >
               Get devnet USDC
-            </a>
+            </ExternalLink>
           </div>
         </section>
       )}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
-            Workers to pay
-          </h2>
+          <Eyebrow as="h2">Workers to pay</Eyebrow>
           <button
             onClick={addWorker}
             disabled={workers.length >= MAX_BATCH_SIZE}
@@ -257,13 +242,13 @@ export default function Home() {
                 value={w.name}
                 onChange={(e) => updateWorker(w.id, "name", e.target.value)}
                 placeholder="Worker name"
-                className="w-full rounded-lg border border-[#123B63]/15 bg-white px-3 py-2.5 text-base outline-none focus:border-[#123B63]/60 transition-colors"
+                className={`w-full ${INPUT_CLASS} border-[#123B63]/15 focus:border-[#123B63]/60`}
               />
               <input
                 value={w.address}
                 onChange={(e) => updateWorker(w.id, "address", e.target.value)}
                 placeholder="Solana devnet address"
-                className={`w-full rounded-lg border bg-white px-3 py-2.5 text-base font-mono outline-none transition-colors ${
+                className={`w-full font-mono ${INPUT_CLASS} ${
                   w.address && !isValidAddress(w.address)
                     ? "border-red-400/60"
                     : "border-[#123B63]/15 focus:border-[#123B63]/60"
@@ -275,7 +260,7 @@ export default function Home() {
                   onChange={(e) => updateWorker(w.id, "amount", e.target.value)}
                   placeholder="USDC"
                   inputMode="decimal"
-                  className="flex-1 sm:flex-none w-full rounded-lg border border-[#123B63]/15 bg-white px-3 py-2.5 text-base text-right outline-none focus:border-[#123B63]/60 transition-colors"
+                  className={`flex-1 sm:flex-none w-full text-right ${INPUT_CLASS} border-[#123B63]/15 focus:border-[#123B63]/60`}
                 />
                 <button
                   onClick={() => removeWorker(w.id)}
@@ -306,7 +291,7 @@ export default function Home() {
         <button
           onClick={payAll}
           disabled={!canPay}
-          className="mt-2 rounded-full bg-[#E3A63B] text-[#16343A] py-3 font-semibold text-sm disabled:opacity-30 disabled:bg-[#123B63]/10 disabled:text-[#5A6B70] transition-colors"
+          className={`mt-2 py-3 text-sm ${PRIMARY_BUTTON_CLASS}`}
         >
           {busy ? "Processing…" : `Pay all ${workers.length} workers now`}
         </button>
@@ -321,27 +306,23 @@ export default function Home() {
 
       {history.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70]">
-            Payment history (this session)
-          </h2>
+          <Eyebrow as="h2">Payment history (this session)</Eyebrow>
           <div className="flex flex-col gap-1.5 text-sm">
             {history.map((h) => (
               <div
                 key={h.signature}
-                className="flex items-center justify-between rounded-lg border border-[#123B63]/12 bg-white px-3.5 py-2.5"
+                className={`flex items-center justify-between px-3.5 py-2.5 ${CARD_CLASS}`}
               >
                 <span>
                   {h.workerCount} workers · {h.total.toFixed(2)} USDC ·{" "}
                   {new Date(h.timestamp).toLocaleTimeString()}
                 </span>
-                <a
+                <ExternalLink
                   href={explorerTxUrl(h.signature)}
-                  target="_blank"
-                  rel="noreferrer"
                   className="underline text-xs font-mono text-[#123B63]"
                 >
                   view on Explorer ↗
-                </a>
+                </ExternalLink>
               </div>
             ))}
           </div>
