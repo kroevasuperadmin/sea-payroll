@@ -29,18 +29,30 @@ function memoIx(memo, signer) {
   });
 }
 
+function assertConfirmed(signature, result) {
+  if (result.value.err) {
+    throw new Error(
+      `Transaction ${signature} failed: ${JSON.stringify(result.value.err)}`
+    );
+  }
+}
+
 async function airdropWithRetry(connection, pubkey, sol, tries = 5) {
+  let lastError;
   for (let i = 0; i < tries; i++) {
     try {
       const sig = await connection.requestAirdrop(pubkey, sol * 1e9);
-      await connection.confirmTransaction(sig, "confirmed");
+      const confirmation = await connection.confirmTransaction(sig, "confirmed");
+      assertConfirmed(sig, confirmation);
       return;
     } catch (e) {
-      console.log(`airdrop attempt ${i + 1} failed: ${e.message}, retrying...`);
+      lastError = e;
+      const message = e instanceof Error ? e.message : String(e);
+      console.log(`airdrop attempt ${i + 1} failed: ${message}, retrying...`);
       await new Promise((r) => setTimeout(r, 3000));
     }
   }
-  throw new Error("airdrop failed after retries");
+  throw new Error("airdrop failed after retries", { cause: lastError });
 }
 
 async function main() {
@@ -94,11 +106,8 @@ async function main() {
   }
 
   console.log("instruction count:", tx.instructions.length);
-  const serializedSizeCheck = tx.compileMessage
-    ? null
-    : null;
-
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
   tx.recentBlockhash = blockhash;
   tx.feePayer = employer.publicKey;
   tx.sign(employer);
@@ -108,7 +117,11 @@ async function main() {
 
   const sig = await connection.sendRawTransaction(tx.serialize());
   console.log("sent:", sig);
-  await connection.confirmTransaction(sig, "confirmed");
+  const confirmation = await connection.confirmTransaction(
+    { signature: sig, blockhash, lastValidBlockHeight },
+    "confirmed"
+  );
+  assertConfirmed(sig, confirmation);
   console.log("CONFIRMED:", `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
 
   for (let i = 0; i < workers.length; i++) {

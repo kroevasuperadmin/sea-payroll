@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { explorerTxUrl } from "@/lib/solana";
 import { AGENT_TASKS } from "@/lib/agentTasks";
@@ -11,55 +12,124 @@ interface TaskResult {
   error?: string;
 }
 
+interface AgentApiResponse {
+  agentAddress?: string;
+  signature?: string;
+  error?: string;
+}
+
+async function readAgentResponse(res: Response): Promise<AgentApiResponse> {
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch (error) {
+    throw new Error("Agent API returned an invalid response", { cause: error });
+  }
+
+  if (typeof body !== "object" || body === null) {
+    throw new Error("Agent API returned an invalid response");
+  }
+
+  const data: AgentApiResponse = {
+    agentAddress:
+      "agentAddress" in body && typeof body.agentAddress === "string"
+        ? body.agentAddress
+        : undefined,
+    signature:
+      "signature" in body && typeof body.signature === "string"
+        ? body.signature
+        : undefined,
+    error:
+      "error" in body && typeof body.error === "string"
+        ? body.error
+        : undefined,
+  };
+
+  if (!res.ok) {
+    throw new Error(data.error || `Agent API request failed (${res.status})`);
+  }
+
+  return data;
+}
+
 export default function AgentDemo() {
   const [results, setResults] = useState<Record<string, TaskResult>>({});
   const [running, setRunning] = useState(false);
   const [agentAddress, setAgentAddress] = useState<string | null>(null);
+  const [agentError, setAgentError] = useState<string | null>(null);
 
-  const loadAgentAddress = async () => {
-    const res = await fetch("/api/agent-pay");
-    const data = await res.json();
-    if (data.agentAddress) setAgentAddress(data.agentAddress);
+  const loadAgentAddress = async (): Promise<string | null> => {
+    setAgentError(null);
+    try {
+      const res = await fetch("/api/agent-pay");
+      const data = await readAgentResponse(res);
+      if (!data.agentAddress) {
+        throw new Error("Agent API response did not include a wallet address");
+      }
+
+      setAgentAddress(data.agentAddress);
+      return data.agentAddress;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setAgentError(message);
+      return null;
+    }
   };
 
   const runAgentCycle = async () => {
     setRunning(true);
-    if (!agentAddress) await loadAgentAddress();
+    setAgentError(null);
 
-    for (const task of AGENT_TASKS) {
-      setResults((r) => ({ ...r, [task.id]: { taskId: task.id, status: "running" } }));
-      try {
-        const res = await fetch("/api/agent-pay", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ taskId: task.id }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Payment failed");
+    try {
+      if (!agentAddress && !(await loadAgentAddress())) return;
+
+      for (const task of AGENT_TASKS) {
         setResults((r) => ({
           ...r,
-          [task.id]: { taskId: task.id, status: "paid", signature: data.signature },
+          [task.id]: { taskId: task.id, status: "running" },
         }));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setResults((r) => ({
-          ...r,
-          [task.id]: { taskId: task.id, status: "failed", error: message },
-        }));
+        try {
+          const res = await fetch("/api/agent-pay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskId: task.id }),
+          });
+          const data = await readAgentResponse(res);
+          if (!data.signature) {
+            throw new Error(
+              "Agent API response did not include a transaction signature"
+            );
+          }
+          setResults((r) => ({
+            ...r,
+            [task.id]: {
+              taskId: task.id,
+              status: "paid",
+              signature: data.signature,
+            },
+          }));
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          setResults((r) => ({
+            ...r,
+            [task.id]: { taskId: task.id, status: "failed", error: message },
+          }));
+        }
       }
+    } finally {
+      setRunning(false);
     }
-    setRunning(false);
   };
 
   return (
     <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-14 flex flex-col gap-10">
       <header>
-        <a
+        <Link
           href="/"
           className="text-xs text-[#5A6B70] hover:text-[#123B63] transition-colors"
         >
           ← back to Tiba
-        </a>
+        </Link>
         <p className="text-[11px] tracking-[0.2em] uppercase text-[#5A6B70] mt-4 mb-3">
           Autonomous Payments
         </p>
@@ -102,6 +172,11 @@ export default function AgentDemo() {
             </button>
           )}
         </div>
+        {agentError && (
+          <p className="mt-3 text-xs text-red-500" role="alert">
+            {agentError}
+          </p>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
