@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
-import {
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createTransferCheckedInstruction,
-  getMint,
-} from "@solana/spl-token";
+import { Connection } from "@solana/web3.js";
 import { getAgentKeypair } from "@/lib/agentWallet";
+import { errorMessage } from "@/lib/errors";
 import {
   DEVNET_RPC,
-  USDC_DEVNET_MINT,
+  buildPaymentTx,
   explorerAddressUrl,
+  explorerTxUrl,
   getUsdcBalance,
+  signSendAndConfirmTx,
 } from "@/lib/solana";
 import { AGENT_TASKS } from "@/lib/agentTasks";
-
-const MEMO_PROGRAM_ID = new PublicKey(
-  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
-);
 
 // Tracks which task ids have already been paid this server instance, keyed to
 // the signature so a replay returns the original receipt instead of paying
@@ -55,17 +43,16 @@ export async function POST(req: NextRequest) {
     if (priorSignature) {
       return NextResponse.json({
         signature: priorSignature,
-        explorerUrl: `https://explorer.solana.com/tx/${priorSignature}?cluster=devnet`,
+        explorerUrl: explorerTxUrl(priorSignature),
         agentAddress: getAgentKeypair().publicKey.toBase58(),
         replayed: true,
       });
     }
 
-    const { address: workerAddress, amount, reason } = task;
+    const { worker, address, amount, reason } = task;
 
     const connection = new Connection(DEVNET_RPC, "confirmed");
     const agent = getAgentKeypair();
-    const worker = new PublicKey(workerAddress);
 
     const agentBalance = await getUsdcBalance(connection, agent.publicKey);
     if (agentBalance < amount) {
@@ -77,67 +64,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const mintInfo = await getMint(connection, USDC_DEVNET_MINT);
-    const decimals = mintInfo.decimals;
-
-    const agentAta = await getAssociatedTokenAddress(
-      USDC_DEVNET_MINT,
-      agent.publicKey
+    const tx = await buildPaymentTx(
+      connection,
+      agent.publicKey,
+      [{ name: worker, address, amount }],
+      `Agent auto-pay: ${reason ?? "task completed"}`
     );
-    const workerAta = await getAssociatedTokenAddress(USDC_DEVNET_MINT, worker);
-
-    const tx = new Transaction();
-    tx.add(
-      new TransactionInstruction({
-        keys: [{ pubkey: agent.publicKey, isSigner: true, isWritable: false }],
-        programId: MEMO_PROGRAM_ID,
-        data: Buffer.from(
-          `Agent auto-pay: ${reason ?? "task completed"}`,
-          "utf-8"
-        ),
-      })
-    );
-    tx.add(
-      createAssociatedTokenAccountIdempotentInstruction(
-        agent.publicKey,
-        workerAta,
-        worker,
-        USDC_DEVNET_MINT
-      )
-    );
-    const rawAmount = BigInt(Math.round(amount * 10 ** decimals));
-    tx.add(
-      createTransferCheckedInstruction(
-        agentAta,
-        USDC_DEVNET_MINT,
-        workerAta,
-        agent.publicKey,
-        rawAmount,
-        decimals
-      )
-    );
-
-    const { blockhash, lastValidBlockHeight } =
-      await connection.getLatestBlockhash();
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = agent.publicKey;
-    tx.sign(agent);
-
-    const signature = await connection.sendRawTransaction(tx.serialize());
-    await connection.confirmTransaction(
-      { signature, blockhash, lastValidBlockHeight },
-      "confirmed"
-    );
+    const signature = await signSendAndConfirmTx(connection, tx, agent);
     paidTaskIds.set(taskId, signature);
 
     return NextResponse.json({
       signature,
-      explorerUrl: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+      explorerUrl: explorerTxUrl(signature),
       agentAddress: agent.publicKey.toBase58(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage(err) }, { status: 500 });
   }
 }
 
@@ -149,7 +91,6 @@ export async function GET() {
       explorerUrl: explorerAddressUrl(agent.publicKey.toBase58()),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage(err) }, { status: 500 });
   }
 }
