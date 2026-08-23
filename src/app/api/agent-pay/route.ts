@@ -50,6 +50,7 @@ function getClientIp(req: NextRequest) {
 }
 
 function getRequestOrigin(req: NextRequest) {
+  // Vercel may rewrite the request URL; prefer the public forwarded origin.
   const forwardedHost = req.headers
     .get("x-forwarded-host")
     ?.split(",")[0]
