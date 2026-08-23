@@ -31,8 +31,9 @@ const MEMO_PROGRAM_ID = new PublicKey(
 // remember it) — not a substitute for real persistence in production.
 const paidTaskIds = new Map<string, string>();
 
-const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_MAX_REQUESTS = 12;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_ENTRIES = 10_000;
 const GLOBAL_PAYOUT_CAP_USDC = 5;
 const GLOBAL_PAYOUT_WINDOW_MS = 60 * 60 * 1_000;
 const rateLimitRequests = new Map<string, number[]>();
@@ -48,6 +49,23 @@ function getClientIp(req: NextRequest) {
   );
 }
 
+function getRequestOrigin(req: NextRequest) {
+  const forwardedHost = req.headers
+    .get("x-forwarded-host")
+    ?.split(",")[0]
+    ?.trim();
+  const forwardedProto = req.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .replace(/:$/, "");
+  if (forwardedHost && forwardedProto) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  const host = req.headers.get("host")?.trim();
+  return host ? `${req.nextUrl.protocol}//${host}` : req.nextUrl.origin;
+}
+
 function isRateLimited(ip: string) {
   const now = Date.now();
   const cutoff = now - RATE_LIMIT_WINDOW_MS;
@@ -60,6 +78,23 @@ function isRateLimited(ip: string) {
   }
   recentRequests.push(now);
   rateLimitRequests.set(ip, recentRequests);
+  if (rateLimitRequests.size > RATE_LIMIT_MAX_ENTRIES) {
+    for (const [knownIp, timestamps] of rateLimitRequests) {
+      if (timestamps.every((timestamp) => timestamp <= cutoff)) {
+        rateLimitRequests.delete(knownIp);
+      }
+      if (rateLimitRequests.size <= RATE_LIMIT_MAX_ENTRIES) {
+        break;
+      }
+    }
+    while (rateLimitRequests.size > RATE_LIMIT_MAX_ENTRIES) {
+      const oldestIp = rateLimitRequests.keys().next().value;
+      if (oldestIp === undefined) {
+        break;
+      }
+      rateLimitRequests.delete(oldestIp);
+    }
+  }
   return false;
 }
 
@@ -131,10 +166,8 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin");
   const isSameOriginFetch =
     req.headers.get("sec-fetch-site")?.toLowerCase() === "same-origin";
-  if (
-    !isTrustedCaller &&
-    ((!origin && !isSameOriginFetch) || (origin && origin !== req.nextUrl.origin))
-  ) {
+  const originMatches = origin === getRequestOrigin(req);
+  if (!isTrustedCaller && !isSameOriginFetch && !originMatches) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
