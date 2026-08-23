@@ -78,6 +78,7 @@ and a link to view it on Solana Explorer.
 **Agent mode:** open http://localhost:3000/agent and click **Run agent cycle**. No
 wallet connection needed — the agent uses its own server-held keypair
 (`AGENT_WALLET_SECRET_KEY` env var) to sign and pay for each verified task automatically.
+Optionally set `AGENT_API_SECRET` to gate trusted non-browser callers.
 
 ## Live demo
 
