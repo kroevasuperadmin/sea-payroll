@@ -2,9 +2,6 @@
 
 *Tiba* — Malay/Indonesian for "arrived." Payments that arrive the moment work is done.
 
-Built for **Superteam Malaysia's Solana Lab — DevLeague 2026** (tracks: *Payments for
-Southeast Asia* + *AI and Agentic Commerce*).
-
 ## What it is
 
 Two modes, one payment engine:
@@ -58,7 +55,7 @@ instant, near-zero-fee, all-or-nothing settlement plus a public receipt.
 ## Tech
 
 - Next.js (App Router) + TypeScript + Tailwind
-- `@solana/web3.js`, `@solana/spl-token`, `@solana/wallet-adapter-react` (Phantom)
+- `@solana/web3.js`, `@solana/spl-token`, `@solana/wallet-adapter-react` (Phantom, Solflare, Wallet Standard)
 - Solana Devnet, Circle Devnet USDC
 
 ## Running it
@@ -84,13 +81,14 @@ wallet connection needed — the agent uses its own server-held keypair
 
 ## Live demo
 
-https://sea-payroll.vercel.app _(devnet)_
+https://usetiba.vercel.app _(devnet)_ — agent demo at https://usetiba.vercel.app/agent
 
 ## Notes
 
-- Batches are capped at 8 workers per transaction to stay comfortably within Solana's
-  transaction size limit.
-- This is a devnet demo built in a single hackathon sprint. In payroll mode there's no
+- Batches are capped at 8 workers per transaction: with an ATA-create + transferChecked
+  per worker plus a memo, 8 workers serialize to ~1,105 of Solana's 1,232-byte legacy
+  transaction limit — a 9th would exceed it.
+- This is a devnet demo built as a solo weekend sprint. In payroll mode there's no
   custodial backend — the employer's own wallet signs and pays directly. In agent mode
   the agent's keypair is a normal Solana keypair; on mainnet it would hold only the
   operating float needed for its task queue, same as any automated payment system.
