@@ -1,6 +1,7 @@
 import {
   Connection,
   PublicKey,
+  type SignatureResult,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
@@ -100,12 +101,22 @@ export async function getUsdcBalance(
   owner: PublicKey,
   mint: PublicKey = USDC_DEVNET_MINT
 ): Promise<number> {
-  try {
-    const ata = await getAssociatedTokenAddress(mint, owner);
-    const balance = await connection.getTokenAccountBalance(ata);
-    return balance.value.uiAmount ?? 0;
-  } catch {
-    return 0;
+  const ata = await getAssociatedTokenAddress(mint, owner);
+  const account = await connection.getAccountInfo(ata);
+  if (!account) return 0;
+
+  const balance = await connection.getTokenAccountBalance(ata);
+  return balance.value.uiAmount ?? 0;
+}
+
+export function assertTransactionConfirmed(
+  signature: string,
+  result: SignatureResult
+): void {
+  if (result.err) {
+    throw new Error(
+      `Transaction ${signature} failed: ${JSON.stringify(result.err)}`
+    );
   }
 }
 

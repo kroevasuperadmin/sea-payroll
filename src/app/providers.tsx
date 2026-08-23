@@ -39,7 +39,8 @@ function walletConnectAdapter(): WalletConnectWalletAdapter[] {
         },
       }),
     ];
-  } catch {
+  } catch (error) {
+    console.error("Failed to initialize WalletConnect adapter", error);
     return [];
   }
 }

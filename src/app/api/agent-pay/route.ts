@@ -15,6 +15,7 @@ import { getAgentKeypair } from "@/lib/agentWallet";
 import {
   DEVNET_RPC,
   USDC_DEVNET_MINT,
+  assertTransactionConfirmed,
   explorerAddressUrl,
   getUsdcBalance,
 } from "@/lib/solana";
@@ -30,6 +31,11 @@ const MEMO_PROGRAM_ID = new PublicKey(
 // remember it) — not a substitute for real persistence in production.
 const paidTaskIds = new Map<string, string>();
 
+function internalError(message: string, error: unknown) {
+  console.error(message, error);
+  return NextResponse.json({ error: message }, { status: 500 });
+}
+
 // Autonomous, server-signed payment — no human wallet-approval step. An
 // automated caller hits this endpoint when it has determined a unit of work
 // is complete, and payment fires immediately: real machine-to-machine,
@@ -42,7 +48,30 @@ const paidTaskIds = new Map<string, string>();
 // per task id per warm instance.
 export async function POST(req: NextRequest) {
   try {
-    const { taskId } = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Request body must be valid JSON" },
+        { status: 400 }
+      );
+    }
+
+    const rawTaskId =
+      typeof body === "object" &&
+      body !== null &&
+      "taskId" in body &&
+      typeof body.taskId === "string"
+        ? body.taskId
+        : null;
+    const taskId = rawTaskId?.trim() || null;
+    if (!taskId) {
+      return NextResponse.json(
+        { error: "taskId must be a non-empty string" },
+        { status: 400 }
+      );
+    }
 
     const task = AGENT_TASKS.find((t) => t.id === taskId);
     if (!task) {
@@ -124,10 +153,11 @@ export async function POST(req: NextRequest) {
     tx.sign(agent);
 
     const signature = await connection.sendRawTransaction(tx.serialize());
-    await connection.confirmTransaction(
+    const confirmation = await connection.confirmTransaction(
       { signature, blockhash, lastValidBlockHeight },
       "confirmed"
     );
+    assertTransactionConfirmed(signature, confirmation.value);
     paidTaskIds.set(taskId, signature);
 
     return NextResponse.json({
@@ -136,8 +166,7 @@ export async function POST(req: NextRequest) {
       agentAddress: agent.publicKey.toBase58(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalError("Agent payment could not be completed", err);
   }
 }
 
@@ -149,7 +178,6 @@ export async function GET() {
       explorerUrl: explorerAddressUrl(agent.publicKey.toBase58()),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalError("Agent wallet is unavailable", err);
   }
 }

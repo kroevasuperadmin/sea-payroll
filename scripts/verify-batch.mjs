@@ -16,6 +16,14 @@ import {
 const USDC_DEVNET_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
+function assertConfirmed(signature, result) {
+  if (result.value.err) {
+    throw new Error(
+      `Transaction ${signature} failed: ${JSON.stringify(result.value.err)}`
+    );
+  }
+}
+
 async function buildBatch(connection, employer, payments) {
   const mintInfo = await getMint(connection, USDC_DEVNET_MINT);
   const decimals = mintInfo.decimals;
@@ -61,5 +69,9 @@ console.log("serialized size:", rawSize, "/ 1232 limit");
 
 const sig = await connection.sendRawTransaction(tx.serialize());
 console.log("sent:", sig);
-await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+const confirmation = await connection.confirmTransaction(
+  { signature: sig, blockhash, lastValidBlockHeight },
+  "confirmed"
+);
+assertConfirmed(sig, confirmation);
 console.log("CONFIRMED:", `https://explorer.solana.com/tx/${sig}?cluster=devnet`);

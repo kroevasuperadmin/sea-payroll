@@ -9,6 +9,7 @@ import {
 import { PublicKey } from "@solana/web3.js";
 import {
   MAX_BATCH_SIZE,
+  assertTransactionConfirmed,
   buildBatchPaymentTx,
   explorerAddressUrl,
   explorerTxUrl,
@@ -52,7 +53,6 @@ const STARTER_WORKERS: WorkerRow[] = [
 
 function isValidAddress(addr: string): boolean {
   try {
-    // eslint-disable-next-line no-new
     new PublicKey(addr);
     return true;
   } catch {
@@ -69,6 +69,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   const total = useMemo(
     () => workers.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0),
@@ -77,8 +78,15 @@ export default function Home() {
 
   const refreshBalance = useCallback(async () => {
     if (!publicKey) return;
-    const bal = await getUsdcBalance(connection, publicKey);
-    setUsdcBalance(bal);
+    setBalanceError(null);
+    try {
+      const bal = await getUsdcBalance(connection, publicKey);
+      setUsdcBalance(bal);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setUsdcBalance(null);
+      setBalanceError(`Unable to load balance: ${message}`);
+    }
   }, [connection, publicKey]);
 
   const updateWorker = (id: string, field: keyof WorkerRow, value: string) => {
@@ -127,10 +135,11 @@ export default function Home() {
       const signature = await sendTransaction(tx, connection);
 
       setStatus("Confirming on devnet…");
-      await connection.confirmTransaction(
+      const confirmation = await connection.confirmTransaction(
         { signature, blockhash, lastValidBlockHeight },
         "confirmed"
       );
+      assertTransactionConfirmed(signature, confirmation.value);
 
       setStatus(`Paid ${workers.length} workers — confirmed.`);
       setHistory((h) => [
@@ -212,6 +221,11 @@ export default function Home() {
               </button>
             </span>
           </div>
+          {balanceError && (
+            <p className="text-xs text-red-500" role="alert">
+              {balanceError}
+            </p>
+          )}
           <div className="flex items-center gap-4 text-xs text-[#5A6B70] pt-1 border-t border-[#123B63]/10 mt-1">
             <a
               className="underline hover:text-[#123B63]"
