@@ -70,6 +70,30 @@ function initSchema(db: DatabaseSync) {
 
     CREATE INDEX IF NOT EXISTS idx_payout_rows_run ON payout_rows(run_id);
     CREATE INDEX IF NOT EXISTS idx_payout_rows_worker ON payout_rows(worker_ref);
+
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id TEXT PRIMARY KEY,
+      run_id TEXT,
+      row_id TEXT,
+      event_type TEXT NOT NULL,
+      actor TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_run ON audit_events(run_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_events_row ON audit_events(row_id);
+
+    CREATE TABLE IF NOT EXISTS partner_submissions (
+      instruction_id TEXT PRIMARY KEY,
+      batch_id TEXT NOT NULL,
+      worker_ref TEXT,
+      status TEXT NOT NULL,
+      submitted_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_partner_submissions_batch ON partner_submissions(batch_id);
   `);
 }
 
@@ -147,6 +171,35 @@ export interface PayoutRow {
   createdAt: string;
 }
 
+export interface AuditEvent {
+  id: string;
+  runId: string | null;
+  rowId: string | null;
+  eventType: string;
+  actor: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+function toAuditEvent(r: Record<string, unknown>): AuditEvent {
+  const rawPayload = (r.payload as string | null) ?? "{}";
+  let payload: Record<string, unknown> = {};
+  try {
+    payload = JSON.parse(rawPayload) as Record<string, unknown>;
+  } catch {
+    payload = { _raw: rawPayload };
+  }
+  return {
+    id: r.id as string,
+    runId: (r.run_id as string | null) ?? null,
+    rowId: (r.row_id as string | null) ?? null,
+    eventType: (r.event_type as string) ?? "unknown",
+    actor: (r.actor as string) ?? "system",
+    payload,
+    createdAt: (r.created_at as string) ?? "",
+  };
+}
+
 function toRecipient(r: Record<string, unknown>): Recipient {
   return {
     id: r.id as string,
@@ -202,6 +255,44 @@ function toPayoutRow(r: Record<string, unknown>): PayoutRow {
     partnerStatus: (r.partner_status as string | null) ?? null,
     createdAt: (r.created_at as string) ?? "",
   };
+}
+
+export function createAuditEvent(input: {
+  runId?: string | null;
+  rowId?: string | null;
+  eventType: string;
+  actor: string;
+  payload?: Record<string, unknown> | null;
+}): AuditEvent {
+  const db = getDb();
+  const id = randomUUID();
+  const payload = JSON.stringify(input.payload ?? {});
+  db.prepare(
+    `INSERT INTO audit_events (id, run_id, row_id, event_type, actor, payload)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    input.runId ?? null,
+    input.rowId ?? null,
+    input.eventType,
+    input.actor,
+    payload
+  );
+  const row = db
+    .prepare("SELECT * FROM audit_events WHERE id = ?")
+    .get(id) as Record<string, unknown> | undefined;
+  if (!row) throw new Error("Audit event not created");
+  return toAuditEvent(row);
+}
+
+export function listAuditEventsForRun(runId: string): AuditEvent[] {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      "SELECT * FROM audit_events WHERE run_id = ? ORDER BY created_at DESC, id DESC"
+    )
+    .all(runId) as Record<string, unknown>[];
+  return rows.map(toAuditEvent);
 }
 
 export function listRecipients(): Recipient[] {

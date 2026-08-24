@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  createAuditEvent,
   createPayoutRow,
   createPayoutRun,
   getPayoutRunById,
@@ -111,12 +112,39 @@ export async function POST(req: NextRequest) {
       totalAmount,
     });
 
+    createAuditEvent({
+      runId: run.id,
+      eventType: "file_uploaded",
+      actor: "employer-console",
+      payload: {
+        filename,
+        period,
+        currency,
+        totalAmount,
+        rowCount: parsedRows.length,
+      },
+    });
+
     const classified: CreatePayoutRowInput[] = await Promise.all(
       parsedRows.map((row) => classifyRow(row, parsedRows, run.id))
     );
 
     for (const rowInput of classified) {
-      createPayoutRow(rowInput);
+      const row = createPayoutRow(rowInput);
+      createAuditEvent({
+        runId: run.id,
+        rowId: row.id,
+        eventType: "row_classified",
+        actor: "tiba-rules-engine",
+        payload: {
+          workerRef: row.workerRef,
+          status: row.status,
+          reason: row.reason,
+          rail: row.rail,
+          amount: row.amount,
+          currency: row.currency,
+        },
+      });
     }
 
     db.prepare("COMMIT").run();

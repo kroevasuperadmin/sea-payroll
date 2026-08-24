@@ -28,6 +28,8 @@ interface PayoutRow {
   rail: string | null;
   status: string;
   reason: string;
+  partnerInstructionId: string | null;
+  partnerStatus: string | null;
 }
 
 interface RunSummary {
@@ -53,6 +55,10 @@ const STATUS_COLORS: Record<string, string> = {
   approved: "bg-sky-100 text-sky-800",
   submitted: "bg-indigo-100 text-indigo-800",
   paid: "bg-emerald-100 text-emerald-800",
+  failed: "bg-rose-100 text-rose-800",
+  returned: "bg-rose-100 text-rose-800",
+  demo_paid: "bg-slate-100 text-slate-700",
+  demo_submitted: "bg-slate-100 text-slate-700",
 };
 
 export default function EmployerConsole() {
@@ -65,7 +71,18 @@ export default function EmployerConsole() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [selectedRun, setSelectedRun] = useState<string | null>(null);
   const [runDetail, setRunDetail] = useState<{ run: RunSummary; rows: PayoutRow[] } | null>(null);
-  const [uploading, setUploading] = useState(false);
+  interface AuditEvent {
+  id: string;
+  eventType: string;
+  actor: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+const [uploading, setUploading] = useState(false);
+const [syncing, setSyncing] = useState(false);
+const [audit, setAudit] = useState<AuditEvent[]>([]);
+const [showAudit, setShowAudit] = useState(false);
 
   useEffect(() => {
     fetch("/api/employer/session", { credentials: "include" })
@@ -199,6 +216,33 @@ export default function EmployerConsole() {
     }
   }
 
+  async function syncRun(id: string) {
+    setSyncing(true);
+    const res = await fetch(`/api/payouts/${id}/sync`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await res.json();
+    setSyncing(false);
+    if (res.ok) {
+      setRunDetail({
+        run: summarizeRun(data.run, data.rows),
+        rows: data.rows,
+      });
+    } else {
+      setError(data.error ?? "Sync failed");
+    }
+  }
+
+  async function loadAudit(id: string) {
+    const res = await fetch(`/api/payouts/${id}/audit`, { credentials: "include" });
+    const data = await res.json();
+    if (res.ok) {
+      setAudit(data.audit ?? []);
+      setShowAudit(true);
+    }
+  }
+
   const [recipientForm, setRecipientForm] = useState({
     workerRef: "",
     destinationCountry: "ID",
@@ -256,6 +300,21 @@ export default function EmployerConsole() {
       setError(data.error ?? "Failed to save recipient");
     }
   }
+
+  useEffect(() => {
+    if (!runDetail?.run) return;
+    if (
+      runDetail.run.status !== "submitted" &&
+      runDetail.run.status !== "approved"
+    ) {
+      return;
+    }
+    const id = runDetail.run.id;
+    const timer = setInterval(() => {
+      syncRun(id);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [runDetail?.run?.status, runDetail?.run?.id]);
 
   if (authenticated === null) {
     return <div className="p-10 text-sm text-[#5A6B70]">Loading…</div>;
@@ -374,14 +433,38 @@ export default function EmployerConsole() {
                     <span className="font-medium">{runDetail.run.status}</span>
                   </p>
                 </div>
-                {runDetail.run.status === "draft" && (
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {runDetail.run.status === "draft" && (
+                    <button
+                      onClick={() => approveRun(runDetail.run.id)}
+                      className="rounded-full bg-[#123B63] text-white px-5 py-2 text-sm font-semibold hover:bg-[#0f2d4d] transition-colors"
+                    >
+                      Approve ready subset
+                    </button>
+                  )}
+                  {(runDetail.run.status === "submitted" ||
+                    runDetail.run.status === "approved") && (
+                    <button
+                      onClick={() => syncRun(runDetail.run.id)}
+                      disabled={syncing}
+                      className="rounded-full bg-[#E3A63B] text-[#16343A] px-5 py-2 text-sm font-semibold disabled:opacity-50"
+                    >
+                      {syncing ? "Syncing…" : "Sync partner statuses"}
+                    </button>
+                  )}
                   <button
-                    onClick={() => approveRun(runDetail.run.id)}
-                    className="rounded-full bg-[#123B63] text-white px-5 py-2 text-sm font-semibold hover:bg-[#0f2d4d] transition-colors"
+                    onClick={() => {
+                      if (showAudit) {
+                        setShowAudit(false);
+                      } else {
+                        loadAudit(runDetail.run.id);
+                      }
+                    }}
+                    className="rounded-full border border-[#123B63]/30 text-[#123B63] px-5 py-2 text-sm font-semibold hover:bg-[#123B63]/[0.04]"
                   >
-                    Approve ready subset
+                    {showAudit ? "Hide audit trail" : "View audit trail"}
                   </button>
-                )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 text-center text-sm">
@@ -412,6 +495,8 @@ export default function EmployerConsole() {
                     <th className="py-2 font-medium">Amount</th>
                     <th className="py-2 font-medium">Rail</th>
                     <th className="py-2 font-medium">Status</th>
+                    <th className="py-2 font-medium">Partner status</th>
+                    <th className="py-2 font-medium">Partner ID</th>
                     <th className="py-2 font-medium">Reason</th>
                   </tr>
                 </thead>
@@ -443,6 +528,23 @@ export default function EmployerConsole() {
                           {row.status}
                         </span>
                       </td>
+                      <td className="py-2.5">
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            STATUS_COLORS[row.partnerStatus ?? ""] ??
+                            "bg-[#123B63]/10 text-[#123B63]"
+                          }`}
+                        >
+                          {row.partnerStatus ?? "—"}
+                        </span>
+                      </td>
+                      <td className="py-2.5">
+                        <code className="text-[10px] text-[#5A6B70] break-all">
+                          {row.partnerInstructionId
+                            ? `${row.partnerInstructionId.slice(0, 12)}…`
+                            : "—"}
+                        </code>
+                      </td>
                       <td className="py-2.5 text-[#5A6B70] max-w-xs">
                         {row.reason}
                       </td>
@@ -450,6 +552,38 @@ export default function EmployerConsole() {
                   ))}
                 </tbody>
               </table>
+
+              {showAudit && (
+                <div className="rounded-lg border border-[#123B63]/10 bg-[#F8F9FA] p-4 flex flex-col gap-2">
+                  <h3 className="text-xs font-semibold text-[#123B63]">
+                    Audit trail
+                  </h3>
+                  {audit.length === 0 ? (
+                    <p className="text-sm text-[#5A6B70]">No audit events yet.</p>
+                  ) : (
+                    <ul className="flex flex-col gap-2 max-h-80 overflow-auto">
+                      {audit.map((e) => (
+                        <li
+                          key={e.id}
+                          className="text-xs border-b border-[#123B63]/5 pb-2 last:border-0"
+                        >
+                          <div className="flex gap-2 flex-wrap">
+                            <span className="font-medium text-[#16343A]">
+                              {e.eventType}
+                            </span>
+                            <span className="text-[#5A6B70]">
+                              · {e.actor} · {new Date(e.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <pre className="text-[10px] text-[#5A6B70] mt-1 whitespace-pre-wrap">
+                            {JSON.stringify(e.payload, null, 2)}
+                          </pre>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

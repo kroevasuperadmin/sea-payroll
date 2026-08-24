@@ -1,0 +1,8 @@
+worker_ref,destination_country,amount,currency,payout_period,name
+ID-001,ID,500.00,IDR,2026-08,Budi Santoso
+ID-002,ID,300.00,IDR,2026-08,Dewi Kusuma
+ID-003,ID,250.00,IDR,2026-08,Agus Wijaya
+ID-004,ID,450.00,IDR,2026-08,Siti Aminah
+ID-005,ID,150.00,USD,2026-08,Rini Hartati
+,US,100.00,IDR,2026-08,Missing Ref
+ID-999,ID,200.00,IDR,2026-08,Unknown Worker
