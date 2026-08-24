@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Worker recipient profile — captured once, reused by every payout run.
+// KYC is manual/admin-settable for this MVP slice (no real provider yet).
+model Recipient {
+  id                  String   @id @default(uuid())
+  workerRef           String   @unique // employer's identity reference for the worker
+  destinationCountry  String   @default("ID")
+  kycStatus           String   @default("unverified") // unverified | pending | verified | failed
+  kycNotes            String?
+  railPreference      String   // bank | ewallet | usdc
+  bankName            String?
+  accountNumber       String?
+  ewalletProvider     String?
+  ewalletIdentifier   String?
+  usdcAddress         String?
+  onHold              Boolean  @default(false)
+  holdReason          String?
+  consentAt           DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  rows PayoutRow[]
+}
+
+// Employer-approved payout file + its operational audit trail.
+model PayoutRun {
+  id            String   @id @default(uuid())
+  filename      String
+  period        String
+  currency      String
+  status        String   @default("draft") // draft | pending_approval | approved | submitted | completed | cancelled
+  totalAmount   String?
+  approvedAt    DateTime?
+  submittedAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rows PayoutRow[]
+}
+
+// One line from a CSV after validation + classification.
+// Status values: ready | needs_action | blocked | approved | submitted | paid | failed | returned
+model PayoutRow {
+  id                String   @id @default(uuid())
+  runId             String
+  run               PayoutRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  workerRef         String
+  recipientId       String?
+  recipient         Recipient? @relation(fields: [recipientId], references: [id])
+  name              String?
+  destinationCountry String
+  amount            String
+  currency          String
+  period            String
+  rail              String?
+  status            String   // see above
+  reason            String   // human-readable explanation
+  partnerInstructionId String?
+  partnerStatus     String?
+  createdAt         DateTime @default(now())
+
+  @@index([runId])
+  @@index([workerRef])
+}
